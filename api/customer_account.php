@@ -98,12 +98,14 @@ if ($method === 'PUT') {
     }
 
     $stmt = $pdo->prepare('
-        UPDATE customers SET name = ?, name_kana = ?, phone = ?, email = ?, branch_id = ?
+        UPDATE customers SET name = ?, name_kana = ?, gender = ?, birth_date = ?, phone = ?, email = ?, branch_id = ?
         WHERE id = ?
     ');
     $stmt->execute([
         $name,
         trim($d['name_kana'] ?? '') ?: null,
+        in_array($d['gender'] ?? '', ['male', 'female'], true) ? $d['gender'] : 'unknown',
+        $d['birth_date'] ?: null,
         $phone,
         $email,
         $branchId,

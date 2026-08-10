@@ -32,6 +32,20 @@ require __DIR__ . '/../includes/customer_header.php';
       <label class="form-label">フリガナ</label>
       <input type="text" id="fNameKana" class="form-control" value="<?= htmlspecialchars($customer['name_kana'] ?? '') ?>">
     </div>
+    <div class="row">
+      <div class="col-6 mb-2">
+        <label class="form-label">性別</label>
+        <select id="fGender" class="form-select">
+          <option value="unknown" <?= $customer['gender'] === 'unknown' ? 'selected' : '' ?>>未登録</option>
+          <option value="male" <?= $customer['gender'] === 'male' ? 'selected' : '' ?>>男性</option>
+          <option value="female" <?= $customer['gender'] === 'female' ? 'selected' : '' ?>>女性</option>
+        </select>
+      </div>
+      <div class="col-6 mb-2">
+        <label class="form-label">生年月日</label>
+        <input type="date" id="fBirthDate" class="form-control" value="<?= htmlspecialchars($customer['birth_date'] ?? '') ?>">
+      </div>
+    </div>
     <div class="mb-2">
       <label class="form-label">連絡先 *</label>
       <input type="text" id="fPhone" class="form-control" value="<?= htmlspecialchars($customer['phone'] ?? '') ?>">
@@ -102,6 +116,8 @@ document.getElementById('btnSaveProfile').addEventListener('click', () => {
   const payload = {
     name: document.getElementById('fName').value.trim(),
     name_kana: document.getElementById('fNameKana').value.trim(),
+    gender: document.getElementById('fGender').value,
+    birth_date: document.getElementById('fBirthDate').value,
     phone: document.getElementById('fPhone').value.trim(),
     email: document.getElementById('fEmail').value.trim(),
     branch_id: document.getElementById('fBranchId').value,
