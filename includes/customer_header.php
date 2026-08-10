@@ -1,7 +1,7 @@
 <?php
 /**
  * @var string $pageTitle
- * @var string $activeMenu one of: home, booking, account, subscribe
+ * @var string $activeMenu one of: home, booking, account, subscribe, contact
  */
 require_once __DIR__ . '/auth.php';
 ?>
@@ -26,6 +26,7 @@ require_once __DIR__ . '/auth.php';
     <a class="<?= ($activeMenu ?? '') === 'booking' ? 'active' : '' ?>" href="/reservation_system_study/customer/booking.php">予約する</a>
     <a class="<?= ($activeMenu ?? '') === 'account' ? 'active' : '' ?>" href="/reservation_system_study/customer/account.php">プロフィール設定</a>
     <a class="<?= ($activeMenu ?? '') === 'subscribe' ? 'active' : '' ?>" href="/reservation_system_study/customer/subscribe.php">月額プラン</a>
+    <a class="<?= ($activeMenu ?? '') === 'contact' ? 'active' : '' ?>" href="/reservation_system_study/customer/contact.php">お問い合わせ</a>
   </nav>
   <div class="customer-user">
     <?= htmlspecialchars($_SESSION['customer_name'] ?? '') ?> 様
