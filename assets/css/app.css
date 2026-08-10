@@ -17,7 +17,7 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, "Segoe UI", "Noto Sans KR", "Noto Sans JP", sans-serif;
+  font-family: 'Poppins', 'Noto Sans JP', -apple-system, "Segoe UI", sans-serif;
   font-size: 14px;
 }
 
