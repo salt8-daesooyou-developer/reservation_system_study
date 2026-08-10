@@ -364,7 +364,7 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 .customer-user { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-dim); flex-shrink: 0; }
 .customer-user a { color: var(--text-dim); }
 .customer-user a:hover { color: var(--accent); }
-.customer-content { max-width: 900px; margin: 0 auto; padding: 32px 16px; }
+.customer-content { max-width: 1400px; margin: 0 auto; padding: 32px 16px; }
 
 /* Customer booking calendar events */
 .week-event.we-mine { background: var(--green); }

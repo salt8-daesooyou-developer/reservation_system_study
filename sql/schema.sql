@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS customers (
   memo TEXT NULL,
   branch_id INT NULL COMMENT '登録した店舗（RIZZ/EN等）',
   stripe_customer_id VARCHAR(100) NULL,
+  google_sub VARCHAR(64) NULL UNIQUE COMMENT 'Google Sign-In の一意ID(sub)',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (branch_id) REFERENCES branches(id),
