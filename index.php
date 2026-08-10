@@ -48,14 +48,14 @@ $isCustomer = !empty($_SESSION['customer_id']);
   <div class="panel mb-3">
     <h6 class="mb-3">お客様</h6>
     <div class="d-grid gap-2">
-      <a class="btn-accent text-start" href="/reservation_system_study/customer/login.php">顧客ログイン</a>
+      <a class="btn-accent text-start" href="/reservation_system_study/login.php?type=customer">顧客ログイン</a>
       <a class="btn btn-outline-light text-start" href="/reservation_system_study/signup.php">新規会員登録</a>
     </div>
   </div>
   <div class="panel">
     <h6 class="mb-3">スタッフ</h6>
     <div class="d-grid gap-2">
-      <a class="btn btn-outline-light text-start" href="/reservation_system_study/admin/login.php">スタッフログイン</a>
+      <a class="btn btn-outline-light text-start" href="/reservation_system_study/login.php?type=admin">スタッフログイン</a>
     </div>
   </div>
   <?php endif; ?>

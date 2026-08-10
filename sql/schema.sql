@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS customers (
   gender ENUM('male','female','unknown') NOT NULL DEFAULT 'unknown',
   birth_date DATE NULL,
   phone VARCHAR(30) NULL UNIQUE,
-  email VARCHAR(100) NULL,
+  email VARCHAR(100) NULL UNIQUE,
   password_hash VARCHAR(255) NULL,
   status ENUM('active','expired','pending','hold','unregistered') NOT NULL DEFAULT 'unregistered',
   memo TEXT NULL,

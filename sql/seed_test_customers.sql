@@ -21,3 +21,7 @@ ON DUPLICATE KEY UPDATE status = VALUES(status);
 -- 顧客ログイン検証用パスワード (平文: test1234!)
 UPDATE customers SET password_hash = '$2y$10$Fu8EdGSw5BWe9g/luOwM0OyUTepULOqHQDTTMA9sxKU0C0oG9C7gC'
   WHERE phone IN ('090-1111-2001', '090-1111-2002');
+
+-- メールログイン検証用テストアカウント (ログインID: daesoo.you@salteight.com / 平文: test1234!)
+UPDATE customers SET email = 'daesoo.you@salteight.com'
+  WHERE phone = '090-1111-2001';
