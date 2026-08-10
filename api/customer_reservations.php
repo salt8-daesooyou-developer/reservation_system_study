@@ -40,12 +40,14 @@ if ($method === 'GET' && isset($_GET['year']) && isset($_GET['summary'])) {
     $end = sprintf('%04d-01-01', $year + 1);
 
     $stmt = $pdo->prepare('
-        SELECT schedule_date, COUNT(*) AS count
-        FROM schedules
-        WHERE branch_id = ? AND schedule_date >= ? AND schedule_date < ?
-        GROUP BY schedule_date
+        SELECT s.schedule_date, COUNT(*) AS count,
+               MAX(CASE WHEN my.id IS NOT NULL THEN 1 ELSE 0 END) AS my_reserved
+        FROM schedules s
+        LEFT JOIN reservations my ON my.schedule_id = s.id AND my.customer_id = ? AND my.status IN ("reserved","show")
+        WHERE s.branch_id = ? AND s.schedule_date >= ? AND s.schedule_date < ?
+        GROUP BY s.schedule_date
     ');
-    $stmt->execute([$branchId, $start, $end]);
+    $stmt->execute([$customerId, $branchId, $start, $end]);
     echo json_encode($stmt->fetchAll());
     exit;
 }
