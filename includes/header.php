@@ -20,11 +20,12 @@ require_once __DIR__ . '/branch.php';
 <div class="app-shell">
   <div class="sidebar">
     <div class="brand">RSVP</div>
-    <a class="nav-link <?= ($activeMenu ?? '') === 'dashboard' ? 'active' : '' ?>" href="/reservation_system_study/index.php">📊 ダッシュボード</a>
-    <a class="nav-link <?= ($activeMenu ?? '') === 'customers' ? 'active' : '' ?>" href="/reservation_system_study/customers.php">👤 顧客管理</a>
-    <a class="nav-link <?= ($activeMenu ?? '') === 'calendar' ? 'active' : '' ?>" href="/reservation_system_study/calendar.php">📅 スケジュール管理</a>
+    <a class="nav-link <?= ($activeMenu ?? '') === 'dashboard' ? 'active' : '' ?>" href="/reservation_system_study/admin/index.php">📊 ダッシュボード</a>
+    <a class="nav-link <?= ($activeMenu ?? '') === 'customers' ? 'active' : '' ?>" href="/reservation_system_study/admin/customers.php">👤 顧客管理</a>
+    <a class="nav-link <?= ($activeMenu ?? '') === 'calendar' ? 'active' : '' ?>" href="/reservation_system_study/admin/calendar.php">📅 スケジュール管理</a>
     <?php if (is_admin()): ?>
-    <a class="nav-link <?= ($activeMenu ?? '') === 'staff' ? 'active' : '' ?>" href="/reservation_system_study/staff.php">🔑 スタッフ管理</a>
+    <a class="nav-link <?= ($activeMenu ?? '') === 'staff' ? 'active' : '' ?>" href="/reservation_system_study/admin/staff.php">🔑 スタッフ管理</a>
+    <a class="nav-link <?= ($activeMenu ?? '') === 'db_schema' ? 'active' : '' ?>" href="/reservation_system_study/admin/db_schema.php">🗄️ DBスキーマ</a>
     <?php endif; ?>
   </div>
   <div class="main">
@@ -47,7 +48,7 @@ require_once __DIR__ . '/branch.php';
       </div>
       <div class="user">
         <?= htmlspecialchars($_SESSION['staff_name'] ?? '') ?>さん
-        <a href="/reservation_system_study/logout.php" class="ms-2">ログアウト</a>
+        <a href="/reservation_system_study/admin/logout.php" class="ms-2">ログアウト</a>
       </div>
     </div>
     <div class="content">

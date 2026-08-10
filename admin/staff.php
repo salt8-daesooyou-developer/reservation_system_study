@@ -1,9 +1,9 @@
 <?php
-require __DIR__ . '/includes/auth.php';
+require __DIR__ . '/../includes/auth.php';
 require_admin();
 $pageTitle = 'スタッフ管理';
 $activeMenu = 'staff';
-require __DIR__ . '/includes/header.php';
+require __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -138,4 +138,4 @@ function deleteStaff(id) {
 loadStaff();
 </script>
 
-<?php require __DIR__ . '/includes/footer.php'; ?>
+<?php require __DIR__ . '/../includes/footer.php'; ?>

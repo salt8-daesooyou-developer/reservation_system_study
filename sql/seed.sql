@@ -24,7 +24,9 @@ ON DUPLICATE KEY UPDATE price = VALUES(price);
 INSERT INTO classes (name, category, capacity) VALUES
   ('BASIC', 'GROUP', 10),
   ('LOWER BODY', 'GROUP', 10),
-  ('UPPER BODY', 'GROUP', 10)
+  ('UPPER BODY', 'GROUP', 10),
+  ('午前クラス', 'AM', 18),
+  ('午後クラス', 'PM', 18)
 ON DUPLICATE KEY UPDATE capacity = VALUES(capacity);
 
 -- 샘플 고객 (동작 확인용)

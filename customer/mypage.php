@@ -1,6 +1,6 @@
 <?php
-require __DIR__ . '/includes/auth.php';
-require __DIR__ . '/config/database.php';
+require __DIR__ . '/../includes/auth.php';
+require __DIR__ . '/../config/database.php';
 require_customer_login();
 
 $pdo = db();
@@ -10,7 +10,7 @@ $stmt = $pdo->prepare('SELECT * FROM customers WHERE id = ?');
 $stmt->execute([$customerId]);
 $customer = $stmt->fetch();
 if (!$customer) {
-    header('Location: /reservation_system_study/customer_logout.php');
+    header('Location: /reservation_system_study/customer/logout.php');
     exit;
 }
 
@@ -37,26 +37,11 @@ $rStmt->execute([$customerId]);
 $reservations = $rStmt->fetchAll();
 
 $statusLabel = ['active' => 'アクティブ', 'expired' => '期限切れ', 'pending' => '予定', 'hold' => '休会中', 'unregistered' => '未登録'];
+$pageTitle = 'マイページ - 予約管理システム';
+$activeMenu = 'home';
+require __DIR__ . '/../includes/customer_header.php';
 ?>
-<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>マイページ - 予約管理システム</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="/reservation_system_study/assets/css/app.css" rel="stylesheet">
-</head>
-<body>
-<div style="max-width:640px; margin:0 auto; padding:32px 16px;">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <div style="color:var(--accent); font-weight:800; font-size:20px;">RSVP</div>
-      <div class="text-secondary" style="font-size:13px;">マイページ</div>
-    </div>
-    <a href="/reservation_system_study/customer_logout.php" class="btn btn-outline-light btn-sm">ログアウト</a>
-  </div>
-
+<div style="max-width:640px; margin:0 auto;">
   <div class="panel mb-3">
     <div style="font-size:18px; font-weight:700;"><?= htmlspecialchars($customer['name']) ?> 様</div>
     <div class="text-secondary" style="font-size:13px;">
@@ -86,12 +71,15 @@ $statusLabel = ['active' => 'アクティブ', 'expired' => '期限切れ', 'pen
   </div>
 
   <div class="panel">
-    <h6 class="mb-3">今後の予約</h6>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="mb-0">今後の予約</h6>
+      <a href="/reservation_system_study/customer/booking.php" class="btn-accent btn-sm">+ 予約する</a>
+    </div>
     <?php if (!$reservations): ?>
       <div class="text-secondary">今後の予約はありません。</div>
     <?php else: ?>
       <table class="data-table">
-        <thead><tr><th>日付</th><th>時間</th><th>クラス</th><th>店舗</th></tr></thead>
+        <thead><tr><th>日付</th><th>時間</th><th>クラス</th><th>店舗</th><th></th></tr></thead>
         <tbody>
           <?php foreach ($reservations as $r): ?>
           <tr>
@@ -99,6 +87,7 @@ $statusLabel = ['active' => 'アクティブ', 'expired' => '期限切れ', 'pen
             <td><?= substr($r['start_time'], 0, 5) ?> - <?= substr($r['end_time'], 0, 5) ?></td>
             <td><?= htmlspecialchars($r['class_name']) ?></td>
             <td><?= htmlspecialchars($r['branch_name']) ?></td>
+            <td><button class="btn btn-sm btn-outline-danger" onclick="cancelReservation(<?= (int) $r['id'] ?>)">キャンセル</button></td>
           </tr>
           <?php endforeach; ?>
         </tbody>
@@ -106,5 +95,17 @@ $statusLabel = ['active' => 'アクティブ', 'expired' => '期限切れ', 'pen
     <?php endif; ?>
   </div>
 </div>
-</body>
-</html>
+
+<script>
+function cancelReservation(id) {
+  if (!confirm('この予約をキャンセルしますか？')) return;
+  fetch(`/reservation_system_study/api/customer_reservations.php?id=${id}`, { method: 'DELETE' })
+    .then(async r => {
+      const data = await r.json();
+      if (!r.ok) { alert('キャンセルに失敗しました。'); return; }
+      location.reload();
+    });
+}
+</script>
+
+<?php require __DIR__ . '/../includes/customer_footer.php'; ?>

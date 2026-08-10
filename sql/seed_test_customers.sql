@@ -17,3 +17,7 @@ INSERT INTO customers (name, name_kana, gender, birth_date, phone, status) VALUE
   ('木村 翔太', 'きむら しょうた', 'male', '1994-05-03', '090-1111-2014', 'hold'),
   ('斎藤 直樹', 'さいとう なおき', 'male', '1999-01-22', '090-1111-2015', 'unregistered')
 ON DUPLICATE KEY UPDATE status = VALUES(status);
+
+-- 顧客ログイン検証用パスワード (平文: test1234!)
+UPDATE customers SET password_hash = '$2y$10$Fu8EdGSw5BWe9g/luOwM0OyUTepULOqHQDTTMA9sxKU0C0oG9C7gC'
+  WHERE phone IN ('090-1111-2001', '090-1111-2002');

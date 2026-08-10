@@ -1,101 +1,64 @@
 <?php
 require __DIR__ . '/includes/auth.php';
-require __DIR__ . '/includes/branch.php';
-require_login();
 
-$pdo = db();
-
-$total = (int) $pdo->query("SELECT COUNT(*) c FROM customers")->fetch()['c'];
-
-$statusCounts = [];
-foreach ($pdo->query("SELECT status, COUNT(*) c FROM customers GROUP BY status") as $row) {
-    $statusCounts[$row['status']] = (int) $row['c'];
-}
-$active = $statusCounts['active'] ?? 0;
-$expired = $statusCounts['expired'] ?? 0;
-$pending = $statusCounts['pending'] ?? 0;
-$hold = $statusCounts['hold'] ?? 0;
-$unregistered = $statusCounts['unregistered'] ?? 0;
-
-$soon = (int) $pdo->query("
-    SELECT COUNT(DISTINCT customer_id) c FROM customer_memberships
-    WHERE status = 'active' AND end_date IS NOT NULL
-      AND end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-")->fetch()['c'];
-
-function pct(int $n, int $total): int {
-    return $total > 0 ? (int) round($n * 100 / $total) : 0;
-}
-
-$todaySchedules = $pdo->prepare("
-    SELECT s.id, s.start_time, s.end_time, s.capacity, c.name AS class_name, s.instructor_name,
-           (SELECT COUNT(*) FROM reservations r WHERE r.schedule_id = s.id AND r.status IN ('reserved','show')) AS booked
-    FROM schedules s
-    JOIN classes c ON c.id = s.class_id
-    WHERE s.branch_id = :branch_id AND s.schedule_date = CURDATE()
-    ORDER BY s.start_time
-");
-$todaySchedules->execute(['branch_id' => current_branch_id()]);
-$todaySchedules = $todaySchedules->fetchAll();
-
-$pageTitle = 'ダッシュボード';
-$activeMenu = 'dashboard';
-require __DIR__ . '/includes/header.php';
+$isStaff = !empty($_SESSION['staff_id']);
+$isAdmin = ($_SESSION['staff_role'] ?? '') === 'admin';
+$isCustomer = !empty($_SESSION['customer_id']);
 ?>
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>予約管理システム</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="/reservation_system_study/assets/css/app.css" rel="stylesheet">
+</head>
+<body>
+<div style="max-width:560px; margin:0 auto; padding:48px 16px;">
+  <div class="text-center mb-4">
+    <div style="color:var(--accent); font-weight:800; font-size:28px;">RSVP</div>
+    <div class="text-secondary" style="font-size:13px;">予約管理システム</div>
+  </div>
 
-<div class="stat-grid">
-  <div class="stat-card">
-    <div class="label">全顧客</div>
-    <div class="value"><?= $total ?></div>
+  <?php if ($isStaff): ?>
+  <div class="panel mb-3">
+    <h6 class="mb-3">管理者メニュー</h6>
+    <div class="d-grid gap-2">
+      <a class="btn btn-outline-light text-start" href="/reservation_system_study/admin/index.php">📊 ダッシュボード</a>
+      <a class="btn btn-outline-light text-start" href="/reservation_system_study/admin/customers.php">👤 顧客管理</a>
+      <a class="btn btn-outline-light text-start" href="/reservation_system_study/admin/calendar.php">📅 スケジュール管理</a>
+      <?php if ($isAdmin): ?>
+      <a class="btn btn-outline-light text-start" href="/reservation_system_study/admin/staff.php">🔑 スタッフ管理</a>
+      <a class="btn btn-outline-light text-start" href="/reservation_system_study/admin/db_schema.php">🗄️ DBスキーマ</a>
+      <?php endif; ?>
+      <a class="btn btn-outline-danger text-start" href="/reservation_system_study/admin/logout.php">ログアウト</a>
+    </div>
   </div>
-  <div class="stat-card">
-    <div class="label">アクティブ <span class="sub">全顧客の <?= pct($active, $total) ?>%</span></div>
-    <div class="value"><?= $active ?></div>
-    <div class="bar"><span style="width:<?= pct($active, $total) ?>%"></span></div>
+  <?php elseif ($isCustomer): ?>
+  <div class="panel mb-3">
+    <h6 class="mb-3">マイメニュー</h6>
+    <div class="d-grid gap-2">
+      <a class="btn btn-outline-light text-start" href="/reservation_system_study/customer/mypage.php">🏠 ホーム</a>
+      <a class="btn btn-outline-light text-start" href="/reservation_system_study/customer/booking.php">📅 予約する</a>
+      <a class="btn btn-outline-danger text-start" href="/reservation_system_study/customer/logout.php">ログアウト</a>
+    </div>
   </div>
-  <div class="stat-card">
-    <div class="label">まもなく期限切れ(7日以内) <span class="sub">全顧客の <?= pct($soon, $total) ?>%</span></div>
-    <div class="value"><?= $soon ?></div>
-    <div class="bar"><span style="width:<?= pct($soon, $total) ?>%"></span></div>
-  </div>
-  <div class="stat-card">
-    <div class="label">期限切れ <span class="sub">全顧客の <?= pct($expired, $total) ?>%</span></div>
-    <div class="value"><?= $expired ?></div>
-    <div class="bar"><span style="width:<?= pct($expired, $total) ?>%"></span></div>
-  </div>
-  <div class="stat-card">
-    <div class="label">休会中 <span class="sub">全顧客の <?= pct($hold, $total) ?>%</span></div>
-    <div class="value"><?= $hold ?></div>
-    <div class="bar"><span style="width:<?= pct($hold, $total) ?>%"></span></div>
-  </div>
-  <div class="stat-card">
-    <div class="label">未登録 <span class="sub">全顧客の <?= pct($unregistered, $total) ?>%</span></div>
-    <div class="value"><?= $unregistered ?></div>
-    <div class="bar"><span style="width:<?= pct($unregistered, $total) ?>%"></span></div>
-  </div>
-</div>
-
-<div class="panel">
-  <h5 class="mb-3">📅 本日のスケジュール (<?= date('Y-m-d') ?>)</h5>
-  <?php if (!$todaySchedules): ?>
-    <div class="text-secondary">本日登録されているスケジュールはありません。</div>
   <?php else: ?>
-    <table class="data-table">
-      <thead>
-        <tr><th>時間</th><th>クラス</th><th>インストラクター</th><th>予約状況</th></tr>
-      </thead>
-      <tbody>
-        <?php foreach ($todaySchedules as $s): ?>
-        <tr>
-          <td><?= substr($s['start_time'],0,5) ?> - <?= substr($s['end_time'],0,5) ?></td>
-          <td><?= htmlspecialchars($s['class_name']) ?></td>
-          <td><?= htmlspecialchars($s['instructor_name'] ?? '-') ?></td>
-          <td><?= (int)$s['booked'] ?> / <?= (int)$s['capacity'] ?></td>
-        </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
+  <div class="panel mb-3">
+    <h6 class="mb-3">お客様</h6>
+    <div class="d-grid gap-2">
+      <a class="btn-accent text-start" href="/reservation_system_study/customer/login.php">顧客ログイン</a>
+      <a class="btn btn-outline-light text-start" href="/reservation_system_study/signup.php">新規会員登録</a>
+    </div>
+  </div>
+  <div class="panel">
+    <h6 class="mb-3">スタッフ</h6>
+    <div class="d-grid gap-2">
+      <a class="btn btn-outline-light text-start" href="/reservation_system_study/admin/login.php">スタッフログイン</a>
+    </div>
+  </div>
   <?php endif; ?>
 </div>
-
-<?php require __DIR__ . '/includes/footer.php'; ?>
+</body>
+</html>

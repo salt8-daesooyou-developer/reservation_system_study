@@ -1,9 +1,9 @@
 <?php
-require __DIR__ . '/includes/auth.php';
+require __DIR__ . '/../includes/auth.php';
 require_login();
 $pageTitle = 'スケジュール管理';
 $activeMenu = 'calendar';
-require __DIR__ . '/includes/header.php';
+require __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="cal-toolbar">
@@ -106,7 +106,7 @@ require __DIR__ . '/includes/header.php';
         <div class="mb-3" id="sdMeta"></div>
         <h6>予約状況</h6>
         <table class="data-table mb-3">
-          <thead><tr><th>顧客名</th><th>状態</th><th>操作</th></tr></thead>
+          <thead><tr><th>顧客名</th><th>状態</th><th>予約日時</th><th>操作</th></tr></thead>
           <tbody id="sdReservations"></tbody>
         </table>
         <h6>予約を追加</h6>
@@ -444,11 +444,18 @@ function renderSidePanel() {
 
 /* ---------- スケジュール追加 ---------- */
 
+let classList = [];
 fetch('/reservation_system_study/api/schedules.php?classes=1')
   .then(r => r.json())
   .then(classes => {
+    classList = classes;
     document.getElementById('sClassId').innerHTML = classes.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
   });
+
+document.getElementById('sClassId').addEventListener('change', e => {
+  const cls = classList.find(c => String(c.id) === e.target.value);
+  if (cls) document.getElementById('sCapacity').value = cls.capacity;
+});
 
 document.getElementById('btnAddSchedule').addEventListener('click', () => scheduleModal.show());
 
@@ -488,12 +495,13 @@ function openScheduleDetail(id) {
 
       const tbody = document.getElementById('sdReservations');
       if (!s.reservations.length) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-secondary">予約はありません。</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-secondary">予約はありません。</td></tr>';
       } else {
         tbody.innerHTML = s.reservations.map(r => `
           <tr>
             <td>${escapeHtml(r.customer_name)}</td>
             <td><span class="badge-status badge-${r.status === 'show' ? 'active' : r.status === 'noshow' ? 'expired' : 'pending'}">${statusLabel[r.status]}</span></td>
+            <td class="text-secondary">${(r.reserved_at || '').slice(0, 16)}</td>
             <td>
               <button class="btn btn-sm btn-outline-light" onclick="updateReservation(${r.id}, 'show')">出席</button>
               <button class="btn btn-sm btn-outline-light" onclick="updateReservation(${r.id}, 'noshow')">ノーショー</button>
@@ -575,4 +583,4 @@ document.getElementById('btnDeleteSchedule').addEventListener('click', () => {
 refresh();
 </script>
 
-<?php require __DIR__ . '/includes/footer.php'; ?>
+<?php require __DIR__ . '/../includes/footer.php'; ?>
