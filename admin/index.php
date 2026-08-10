@@ -1,6 +1,6 @@
 <?php
-require __DIR__ . '/includes/auth.php';
-require __DIR__ . '/includes/branch.php';
+require __DIR__ . '/../includes/auth.php';
+require __DIR__ . '/../includes/branch.php';
 require_login();
 
 $pdo = db();
@@ -40,7 +40,7 @@ $todaySchedules = $todaySchedules->fetchAll();
 
 $pageTitle = 'ダッシュボード';
 $activeMenu = 'dashboard';
-require __DIR__ . '/includes/header.php';
+require __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="stat-grid">
@@ -98,4 +98,4 @@ require __DIR__ . '/includes/header.php';
   <?php endif; ?>
 </div>
 
-<?php require __DIR__ . '/includes/footer.php'; ?>
+<?php require __DIR__ . '/../includes/footer.php'; ?>

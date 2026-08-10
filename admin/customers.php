@@ -1,9 +1,9 @@
 <?php
-require __DIR__ . '/includes/auth.php';
+require __DIR__ . '/../includes/auth.php';
 require_login();
 $pageTitle = '顧客管理';
 $activeMenu = 'customers';
-require __DIR__ . '/includes/header.php';
+require __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -301,4 +301,4 @@ document.getElementById('btnAddMembership').addEventListener('click', () => {
 loadCustomers();
 </script>
 
-<?php require __DIR__ . '/includes/footer.php'; ?>
+<?php require __DIR__ . '/../includes/footer.php'; ?>

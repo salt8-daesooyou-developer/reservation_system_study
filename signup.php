@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/includes/auth.php';
 if (!empty($_SESSION['staff_id'])) {
-    header('Location: /reservation_system_study/index.php');
+    header('Location: /reservation_system_study/admin/index.php');
     exit;
 }
 ?>
@@ -96,7 +96,7 @@ if (!empty($_SESSION['staff_id'])) {
     </form>
 
     <div class="text-center mt-3">
-      <a href="/reservation_system_study/login.php" style="font-size:13px;">既にアカウントをお持ちの方はこちら</a>
+      <a href="/reservation_system_study/admin/login.php" style="font-size:13px;">既にアカウントをお持ちの方はこちら</a>
     </div>
   </div>
 
