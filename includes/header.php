@@ -25,6 +25,7 @@ require_once __DIR__ . '/branch.php';
     <a class="nav-link <?= ($activeMenu ?? '') === 'calendar' ? 'active' : '' ?>" href="/reservation_system_study/admin/calendar.php">📅 スケジュール管理</a>
     <?php if (is_admin()): ?>
     <a class="nav-link <?= ($activeMenu ?? '') === 'staff' ? 'active' : '' ?>" href="/reservation_system_study/admin/staff.php">🔑 スタッフ管理</a>
+    <a class="nav-link <?= ($activeMenu ?? '') === 'db_schema' ? 'active' : '' ?>" href="/reservation_system_study/admin/db_schema.php">🗄️ DBスキーマ</a>
     <?php endif; ?>
   </div>
   <div class="main">
