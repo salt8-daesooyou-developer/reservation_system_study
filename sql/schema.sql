@@ -24,10 +24,11 @@ CREATE TABLE IF NOT EXISTS customers (
   gender ENUM('male','female','unknown') NOT NULL DEFAULT 'unknown',
   birth_date DATE NULL,
   phone VARCHAR(30) NULL UNIQUE,
-  email VARCHAR(100) NULL,
+  email VARCHAR(100) NULL UNIQUE,
   password_hash VARCHAR(255) NULL,
   status ENUM('active','expired','pending','hold','unregistered') NOT NULL DEFAULT 'unregistered',
   memo TEXT NULL,
+  stripe_customer_id VARCHAR(100) NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_customers_status (status),
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS membership_products (
   valid_days INT NULL,
   session_count INT NULL,
   price DECIMAL(10,0) NOT NULL DEFAULT 0,
+  stripe_price_id VARCHAR(100) NULL COMMENT 'Stripe recurring Price ID (月額課金用)',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -58,6 +60,24 @@ CREATE TABLE IF NOT EXISTS customer_memberships (
   FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
   FOREIGN KEY (product_id) REFERENCES membership_products(id),
   INDEX idx_cm_customer (customer_id)
+) ENGINE=InnoDB;
+
+-- Stripe 정기결제(구독) 상태
+CREATE TABLE IF NOT EXISTS stripe_subscriptions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  customer_id INT NOT NULL,
+  product_id INT NOT NULL,
+  stripe_checkout_session_id VARCHAR(120) NULL,
+  stripe_subscription_id VARCHAR(120) NULL UNIQUE,
+  status ENUM('pending','active','past_due','canceled','incomplete') NOT NULL DEFAULT 'pending',
+  current_period_end DATETIME NULL,
+  customer_membership_id INT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  FOREIGN KEY (product_id) REFERENCES membership_products(id),
+  FOREIGN KEY (customer_membership_id) REFERENCES customer_memberships(id),
+  INDEX idx_stripe_sub_customer (customer_id)
 ) ENGINE=InnoDB;
 
 -- 지점 (프렌차이즈 내 개별 매장)

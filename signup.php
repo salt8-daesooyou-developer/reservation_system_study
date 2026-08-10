@@ -11,6 +11,9 @@ if (!empty($_SESSION['staff_id'])) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>会員登録 - 予約管理システム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="/reservation_system_study/assets/css/app.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -62,8 +65,8 @@ if (!empty($_SESSION['staff_id'])) {
           <input type="text" id="fPhone" class="form-control" placeholder="090-1234-5678">
         </div>
         <div class="mb-2">
-          <label class="form-label">メールアドレス</label>
-          <input type="email" id="fEmail" class="form-control">
+          <label class="form-label">メールアドレス（ログインIDになります） *</label>
+          <input type="email" id="fEmail" class="form-control" required>
         </div>
       </div>
 
@@ -96,7 +99,7 @@ if (!empty($_SESSION['staff_id'])) {
     </form>
 
     <div class="text-center mt-3">
-      <a href="/reservation_system_study/admin/login.php" style="font-size:13px;">既にアカウントをお持ちの方はこちら</a>
+      <a href="/reservation_system_study/index.php" style="font-size:13px;">既にアカウントをお持ちの方はこちら</a>
     </div>
   </div>
 
@@ -110,8 +113,11 @@ const errorMessages = {
   password_too_short: 'パスワードは8文字以上で入力してください。',
   password_needs_special_char: 'パスワードには特殊文字を1つ以上含めてください。',
   phone_required: '連絡先を入力してください。',
+  email_required: 'メールアドレスを入力してください。',
   invalid_email: 'メールアドレスの形式が正しくありません。',
   duplicate_phone: 'この連絡先は既に登録されています。',
+  duplicate_email: 'このメールアドレスは既に登録されています。',
+  duplicate_customer: '既に登録されている連絡先またはメールアドレスです。',
   username_required: 'ログインIDを入力してください。',
   duplicate_username: 'このログインIDは既に使用されています。',
 };
@@ -156,12 +162,14 @@ document.getElementById('signupForm').addEventListener('submit', e => {
 
   if (currentType === 'customer') {
     const phone = document.getElementById('fPhone').value.trim();
+    const email = document.getElementById('fEmail').value.trim();
     if (!phone) { showError('連絡先を入力してください。'); return; }
+    if (!email) { showError('メールアドレスを入力してください。'); return; }
     payload.name_kana = document.getElementById('fNameKana').value.trim();
     payload.gender = document.getElementById('fGender').value;
     payload.birth_date = document.getElementById('fBirthDate').value;
     payload.phone = phone;
-    payload.email = document.getElementById('fEmail').value.trim();
+    payload.email = email;
   } else {
     const username = document.getElementById('fUsername').value.trim();
     if (!username) { showError('ログインIDを入力してください。'); return; }

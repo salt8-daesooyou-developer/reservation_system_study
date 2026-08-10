@@ -68,9 +68,22 @@ if ($type === 'customer') {
         echo json_encode(['error' => 'phone_required']);
         exit;
     }
-    if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if ($email === '') {
+        http_response_code(422);
+        echo json_encode(['error' => 'email_required']);
+        exit;
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         http_response_code(422);
         echo json_encode(['error' => 'invalid_email']);
+        exit;
+    }
+
+    $dupStmt = $pdo->prepare('SELECT phone, email FROM customers WHERE phone = ? OR email = ?');
+    $dupStmt->execute([$phone, $email]);
+    if ($dup = $dupStmt->fetch()) {
+        http_response_code(422);
+        echo json_encode(['error' => $dup['phone'] === $phone ? 'duplicate_phone' : 'duplicate_email']);
         exit;
     }
 
@@ -85,12 +98,12 @@ if ($type === 'customer') {
             $gender,
             $birthDate,
             $phone,
-            $email ?: null,
+            $email,
             password_hash($password, PASSWORD_DEFAULT),
         ]);
     } catch (PDOException $e) {
         http_response_code(422);
-        echo json_encode(['error' => 'duplicate_phone']);
+        echo json_encode(['error' => 'duplicate_customer']);
         exit;
     }
     echo json_encode(['ok' => true, 'id' => (int) $pdo->lastInsertId()]);

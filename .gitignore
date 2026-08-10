@@ -1,0 +1,9 @@
+# Secrets — never commit real API keys
+/config/stripe_keys.local.php
+
+# OS / editor
+Thumbs.db
+.DS_Store
+
+# Local scratch files created during manual testing
+.tmp_*
