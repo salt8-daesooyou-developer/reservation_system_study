@@ -51,7 +51,10 @@ require __DIR__ . '/../includes/customer_header.php';
   </div>
 
   <div class="panel mb-3">
-    <h6 class="mb-3">保有中の会員権</h6>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="mb-0">保有中の会員権</h6>
+      <a href="/reservation_system_study/customer/subscribe.php" class="btn btn-outline-light btn-sm">月額プランを申し込む</a>
+    </div>
     <?php if (!$memberships): ?>
       <div class="text-secondary">保有中の会員権はありません。</div>
     <?php else: ?>
