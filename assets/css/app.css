@@ -151,6 +151,9 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 .cal-cell.other-month { background: #f7fafc; opacity: .6; }
 .cal-cell.today { outline: 2px solid var(--accent); outline-offset: -2px; }
 .cal-cell.selected { background: var(--panel-2); }
+.cal-cell.holiday { background: rgba(214,69,69,.08); }
+.cal-cell.holiday .date-num { color: var(--red); font-weight: 700; }
+.holiday-badge { display: inline-block; font-size: 11px; font-weight: 700; color: var(--red); background: rgba(214,69,69,.12); border-radius: 4px; padding: 1px 6px; margin-top: 2px; }
 .cal-cell .date-num { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
 .cal-cell .sched-item {
   font-size: 11px;
@@ -191,6 +194,8 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 .week-day-head .wd-num { font-size: 16px; font-weight: 700; }
 .week-day-head.today .wd-num { color: var(--accent); }
 .week-day-head.selected { background: var(--panel-2); }
+.week-day-head.holiday { background: rgba(214,69,69,.08); }
+.week-day-head.holiday .wd-num { color: var(--red); }
 .week-body { display: grid; grid-template-columns: 56px repeat(7, 1fr); position: relative; max-height: 640px; overflow-y: auto; }
 .week-time-col { position: relative; border-right: 1px solid var(--border); }
 .week-hour-label { position: absolute; left: 0; right: 6px; text-align: right; font-size: 11px; color: var(--text-dim); transform: translateY(-6px); }
@@ -230,6 +235,7 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 }
 .mini-day:not(.empty):hover { background: var(--panel-2); }
 .mini-day.today { background: var(--accent); color: #fff; font-weight: 700; }
+.mini-day.holiday:not(.today) { color: var(--red); font-weight: 700; }
 .mini-dot { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin: 1px auto 0; }
 .mini-day.today .mini-dot { background: #fff; }
 

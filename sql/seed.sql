@@ -33,8 +33,12 @@ INSERT INTO classes (name, category, capacity) VALUES
   ('LOWER BODY', 'GROUP', 10),
   ('UPPER BODY', 'GROUP', 10),
   ('午前クラス', 'AM', 18),
-  ('午後クラス', 'PM', 18)
-ON DUPLICATE KEY UPDATE capacity = VALUES(capacity);
+  ('午後クラス', 'PM', 18),
+  ('下半身クラス', '下半身', 12),
+  ('上半身クラス', '上半身', 12),
+  ('ヒップクラス', 'ヒップ', 12),
+  ('レッグクラス', 'レッグ', 12)
+ON DUPLICATE KEY UPDATE category = VALUES(category), capacity = VALUES(capacity);
 
 -- 샘플 고객 (동작 확인용)
 INSERT INTO customers (name, name_kana, gender, birth_date, phone, status) VALUES

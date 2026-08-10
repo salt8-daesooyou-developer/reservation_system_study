@@ -102,7 +102,7 @@ if ($method === 'POST') {
     }
 
     $sStmt = $pdo->prepare('
-        SELECT s.capacity, s.schedule_date,
+        SELECT s.capacity, s.schedule_date, s.branch_id,
                (SELECT COUNT(*) FROM reservations r WHERE r.schedule_id = s.id AND r.status IN ("reserved","show")) AS booked
         FROM schedules s WHERE s.id = ?
     ');
@@ -121,6 +121,14 @@ if ($method === 'POST') {
     if ($schedule['booked'] >= $schedule['capacity']) {
         http_response_code(422);
         echo json_encode(['error' => 'capacity_full']);
+        exit;
+    }
+
+    $holidayStmt = $pdo->prepare('SELECT id FROM branch_holidays WHERE branch_id = ? AND holiday_date = ?');
+    $holidayStmt->execute([$schedule['branch_id'], $schedule['schedule_date']]);
+    if ($holidayStmt->fetch()) {
+        http_response_code(422);
+        echo json_encode(['error' => 'branch_holiday']);
         exit;
     }
 

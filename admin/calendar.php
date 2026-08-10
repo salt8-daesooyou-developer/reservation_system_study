@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/../includes/auth.php';
+require __DIR__ . '/../includes/branch.php';
 require_login();
 $pageTitle = 'スケジュール管理';
 $activeMenu = 'calendar';
@@ -50,6 +51,7 @@ require __DIR__ . '/../includes/header.php';
       <h6 class="mb-0" id="sideDate">日付を選択してください</h6>
       <button class="btn-accent btn-sm" id="btnAddSchedule">+ スケジュール追加</button>
     </div>
+    <button class="btn btn-outline-danger btn-sm w-100 mb-2" id="btnToggleHoliday">休日に設定</button>
     <div id="sideScheduleList"><div class="text-secondary">-</div></div>
   </div>
 </div>
@@ -128,6 +130,8 @@ require __DIR__ . '/../includes/header.php';
 const scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
 const scheduleDetailModal = new bootstrap.Modal(document.getElementById('scheduleDetailModal'));
 
+const CURRENT_BRANCH_ID = <?= (int) current_branch_id() ?>;
+
 const today = new Date();
 let viewMode = 'month'; // 'year' | 'month' | 'week'
 let viewYear = today.getFullYear();
@@ -137,10 +141,11 @@ let selectedDate = ymd(today);
 let monthSchedules = [];
 let weekSchedules = [];
 let yearSummary = {}; // date -> count
+let holidaySet = {}; // date -> memo
 let currentScheduleId = null;
 
-const WEEK_START_HOUR = 8;
-const WEEK_END_HOUR = 22;
+const WEEK_START_HOUR = 0;
+const WEEK_END_HOUR = 24;
 const HOUR_HEIGHT = 48;
 
 function ymd(d) {
@@ -220,13 +225,20 @@ function updateTitle() {
 /* ---------- 月ビュー ---------- */
 
 function loadMonth() {
-  fetch(`/reservation_system_study/api/schedules.php?year=${viewYear}&month=${viewMonth}`)
-    .then(r => r.json())
-    .then(rows => {
-      monthSchedules = rows;
-      renderMonthGrid();
-      renderSidePanel();
-    });
+  const start = `${viewYear}-${String(viewMonth).padStart(2,'0')}-01`;
+  let endY = viewYear, endM = viewMonth + 1;
+  if (endM > 12) { endM = 1; endY++; }
+  const end = `${endY}-${String(endM).padStart(2,'0')}-01`;
+  Promise.all([
+    fetch(`/reservation_system_study/api/schedules.php?year=${viewYear}&month=${viewMonth}`).then(r => r.json()),
+    fetch(`/reservation_system_study/api/holidays.php?branch_id=${CURRENT_BRANCH_ID}&start=${start}&end=${end}`).then(r => r.json()),
+  ]).then(([schedules, holidays]) => {
+    monthSchedules = schedules;
+    holidaySet = {};
+    holidays.forEach(h => { holidaySet[h.holiday_date] = h.memo; });
+    renderMonthGrid();
+    renderSidePanel();
+  });
 }
 
 function renderMonthGrid() {
@@ -258,14 +270,17 @@ function renderMonthGrid() {
     if (otherMonth) classes += ' other-month';
     if (isToday) classes += ' today';
     if (isSelected) classes += ' selected';
+    if (holidaySet[dateStr] !== undefined) classes += ' holiday';
 
     const items = daySchedules.slice(0, 3).map(s =>
       `<div class="sched-item">${s.start_time.slice(0,5)} ${escapeHtml(s.class_name)} ${s.booked}/${s.capacity}</div>`
     ).join('');
     const more = daySchedules.length > 3 ? `<div class="sched-item text-secondary">他 ${daySchedules.length - 3} 件</div>` : '';
+    const holidayBadge = holidaySet[dateStr] !== undefined ? '<span class="holiday-badge">休日</span>' : '';
 
     html += `<div class="${classes}" data-date="${dateStr}">
       <div class="date-num">${cellDate.getDate()}</div>
+      ${holidayBadge}
       ${items}${more}
     </div>`;
   }
@@ -292,13 +307,16 @@ function loadWeek() {
   const start = getWeekStart(weekAnchor);
   const startStr = ymd(start);
   const endStr = addDays(startStr, 7);
-  fetch(`/reservation_system_study/api/schedules.php?start=${startStr}&end=${endStr}`)
-    .then(r => r.json())
-    .then(rows => {
-      weekSchedules = rows;
-      renderWeekGrid(start);
-      renderSidePanel();
-    });
+  Promise.all([
+    fetch(`/reservation_system_study/api/schedules.php?start=${startStr}&end=${endStr}`).then(r => r.json()),
+    fetch(`/reservation_system_study/api/holidays.php?branch_id=${CURRENT_BRANCH_ID}&start=${startStr}&end=${endStr}`).then(r => r.json()),
+  ]).then(([schedules, holidays]) => {
+    weekSchedules = schedules;
+    holidaySet = {};
+    holidays.forEach(h => { holidaySet[h.holiday_date] = h.memo; });
+    renderWeekGrid(start);
+    renderSidePanel();
+  });
 }
 
 function renderWeekGrid(weekStart) {
@@ -315,9 +333,11 @@ function renderWeekGrid(weekStart) {
     const dateStr = ymd(d);
     const isToday = dateStr === ymd(today);
     const isSelected = dateStr === selectedDate;
-    return `<div class="week-day-head ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-date="${dateStr}">
+    const isHoliday = holidaySet[dateStr] !== undefined;
+    return `<div class="week-day-head ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${isHoliday ? 'holiday' : ''}" data-date="${dateStr}">
       <div class="wd-name">${weekdayNames[d.getDay()]}</div>
       <div class="wd-num">${d.getDate()}</div>
+      ${isHoliday ? '<span class="holiday-badge">休</span>' : ''}
     </div>`;
   }).join('');
 
@@ -360,13 +380,18 @@ function renderWeekGrid(weekStart) {
 /* ---------- 年ビュー ---------- */
 
 function loadYear() {
-  fetch(`/reservation_system_study/api/schedules.php?year=${viewYear}&summary=1`)
-    .then(r => r.json())
-    .then(rows => {
-      yearSummary = {};
-      rows.forEach(r => { yearSummary[r.schedule_date] = r.count; });
-      renderYearGrid();
-    });
+  const start = `${viewYear}-01-01`;
+  const end = `${viewYear + 1}-01-01`;
+  Promise.all([
+    fetch(`/reservation_system_study/api/schedules.php?year=${viewYear}&summary=1`).then(r => r.json()),
+    fetch(`/reservation_system_study/api/holidays.php?branch_id=${CURRENT_BRANCH_ID}&start=${start}&end=${end}`).then(r => r.json()),
+  ]).then(([rows, holidays]) => {
+    yearSummary = {};
+    rows.forEach(r => { yearSummary[r.schedule_date] = r.count; });
+    holidaySet = {};
+    holidays.forEach(h => { holidaySet[h.holiday_date] = h.memo; });
+    renderYearGrid();
+  });
 }
 
 function renderYearGrid() {
@@ -388,8 +413,9 @@ function renderYearGrid() {
       const d = new Date(viewYear, m - 1, dayNum);
       const dateStr = ymd(d);
       const isToday = dateStr === ymd(today);
+      const isHoliday = holidaySet[dateStr] !== undefined;
       const count = yearSummary[dateStr] || 0;
-      cells += `<div class="mini-day ${isToday ? 'today' : ''}" data-date="${dateStr}">
+      cells += `<div class="mini-day ${isToday ? 'today' : ''} ${isHoliday ? 'holiday' : ''}" data-date="${dateStr}">
         <span>${dayNum}</span>${count > 0 ? '<i class="mini-dot"></i>' : ''}
       </div>`;
     }
@@ -426,6 +452,13 @@ function renderYearGrid() {
 
 function renderSidePanel() {
   document.getElementById('sideDate').textContent = selectedDate;
+
+  const isHoliday = holidaySet[selectedDate] !== undefined;
+  const holidayBtn = document.getElementById('btnToggleHoliday');
+  holidayBtn.textContent = isHoliday ? '✕ 休日を解除' : '休日に設定';
+  holidayBtn.classList.toggle('btn-outline-danger', !isHoliday);
+  holidayBtn.classList.toggle('btn-outline-secondary', isHoliday);
+
   const source = viewMode === 'week' ? weekSchedules : monthSchedules;
   const daySchedules = source.filter(s => s.schedule_date === selectedDate);
   const list = document.getElementById('sideScheduleList');
@@ -441,6 +474,18 @@ function renderSidePanel() {
     </div>
   `).join('');
 }
+
+document.getElementById('btnToggleHoliday').addEventListener('click', () => {
+  const isHoliday = holidaySet[selectedDate] !== undefined;
+  const req = isHoliday
+    ? fetch(`/reservation_system_study/api/holidays.php?date=${selectedDate}`, { method: 'DELETE' })
+    : fetch('/reservation_system_study/api/holidays.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ holiday_date: selectedDate }),
+      });
+  req.then(() => refresh());
+});
 
 /* ---------- スケジュール追加 ---------- */
 
