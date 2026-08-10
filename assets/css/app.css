@@ -5,8 +5,8 @@
   --border: #dfe6ec;
   --text: #1a1a1a;
   --text-dim: #7a8a99;
-  --accent: #1c7fae;
-  --accent-dark: #135f83;
+  --accent: #0097DB;
+  --accent-dark: #0077AA;
   --green: #1f9d57;
   --red: #d64545;
   --yellow: #b8860b;
@@ -405,18 +405,19 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 .auth-card {
   background: var(--panel);
   width: 100%;
-  max-width: 440px;
-  border-radius: 20px;
+  max-width: 542px;
+  height: 620px;
+  border-radius: 8px;
   padding: 48px 40px 36px;
   box-shadow: 0 20px 50px rgba(20, 60, 90, .10);
 }
 .auth-title {
   text-align: center;
   font-weight: 800;
-  font-size: 26px;
+  font-size: 40px;
   letter-spacing: .5px;
   color: var(--text);
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 .auth-subtitle {
   text-align: center;
@@ -439,7 +440,7 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 .auth-toggle button.active { background: var(--accent); color: #fff; }
 
 .auth-field { margin-bottom: 18px; }
-.auth-field label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.auth-field label { display: block; font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
 .auth-field input {
   width: 100%;
   padding: 11px 14px;
@@ -453,8 +454,8 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 
 .auth-submit {
   width: 100%;
-  margin-top: 8px;
-  padding: 13px 0;
+  margin-top: 28px;
+  padding: 16px 0;
   border: none;
   border-radius: 8px;
   background: var(--accent);
