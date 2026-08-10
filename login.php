@@ -54,36 +54,45 @@ if (!empty($_SESSION['customer_id'])) {
 <link href="/reservation_system_study/assets/css/app.css" rel="stylesheet">
 </head>
 <body class="auth-page">
-  <div class="auth-card">
-    <div class="auth-title">MYPAGE LOGIN</div>
+  <div class="auth-brand">RSVP</div>
+  <div class="auth-main">
+    <div class="auth-card">
+      <div class="auth-title">MYPAGE LOGIN</div>
 
-    <div class="auth-toggle" id="typeToggle">
-      <button type="button" data-type="admin" class="<?= $initialType === 'admin' ? 'active' : '' ?>">管理者用</button>
-      <button type="button" data-type="customer" class="<?= $initialType === 'customer' ? 'active' : '' ?>">顧客用</button>
+      <div class="auth-toggle" id="typeToggle">
+        <button type="button" data-type="admin" class="<?= $initialType === 'admin' ? 'active' : '' ?>">管理者用</button>
+        <button type="button" data-type="customer" class="<?= $initialType === 'customer' ? 'active' : '' ?>">顧客用</button>
+      </div>
+
+      <?php if ($error): ?>
+        <div class="auth-error"><?= htmlspecialchars($error) ?></div>
+      <?php endif; ?>
+
+      <form method="post" id="loginForm">
+        <input type="hidden" name="type" id="typeInput" value="<?= htmlspecialchars($initialType) ?>">
+        <div class="auth-field">
+          <label id="loginIdLabel">ログインID</label>
+          <input type="text" name="login_id" id="loginIdInput" autofocus>
+        </div>
+        <div class="auth-field">
+          <label>パスワード</label>
+          <input type="password" name="password">
+        </div>
+        <button type="submit" class="auth-submit">ログイン</button>
+      </form>
+
+      <div class="auth-links">
+        <a href="/reservation_system_study/signup.php">新規会員登録</a>
+        <a href="#" id="forgotLink">ログインIDまたはパスワードを忘れた場合</a>
+      </div>
     </div>
 
-    <?php if ($error): ?>
-      <div class="auth-error"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
-
-    <form method="post" id="loginForm">
-      <input type="hidden" name="type" id="typeInput" value="<?= htmlspecialchars($initialType) ?>">
-      <div class="auth-field">
-        <label id="loginIdLabel">ログインID</label>
-        <input type="text" name="login_id" id="loginIdInput" autofocus>
-      </div>
-      <div class="auth-field">
-        <label>パスワード</label>
-        <input type="password" name="password">
-      </div>
-      <button type="submit" class="auth-submit">ログイン</button>
-    </form>
-
-    <div class="auth-links">
-      <a href="/reservation_system_study/signup.php">新規会員登録</a>
-      <a href="#" id="forgotLink">ログインIDまたはパスワードを忘れた場合</a>
+    <div class="auth-consent">
+      ログインすることで、当社の<a href="#" id="privacyLink">プライバシーポリシー</a>および<a href="#" id="termsLink">利用規則</a>に同意したものとみなされます。
     </div>
   </div>
+
+  <div class="auth-footer">&copy; Copyright(c) <?= date('Y') ?> SALT EIGHT All rights reserved.</div>
 
 <script>
   const toggle = document.getElementById('typeToggle');
@@ -116,6 +125,14 @@ if (!empty($_SESSION['customer_id'])) {
   document.getElementById('forgotLink').addEventListener('click', e => {
     e.preventDefault();
     alert('管理者にお問い合わせください。');
+  });
+  document.getElementById('privacyLink').addEventListener('click', e => {
+    e.preventDefault();
+    alert('プライバシーポリシーは準備中です。');
+  });
+  document.getElementById('termsLink').addEventListener('click', e => {
+    e.preventDefault();
+    alert('利用規則は準備中です。');
   });
 </script>
 </body>
