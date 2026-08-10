@@ -1,7 +1,7 @@
 <?php
 /**
  * @var string $pageTitle
- * @var string $activeMenu one of: home, booking
+ * @var string $activeMenu one of: home, booking, account, subscribe
  */
 require_once __DIR__ . '/auth.php';
 ?>
@@ -22,15 +22,10 @@ require_once __DIR__ . '/auth.php';
 <div class="customer-topbar">
   <div class="brand">RSVP</div>
   <nav class="customer-nav">
-    <div class="dropdown">
-      <a class="dropdown-toggle <?= ($activeMenu ?? '') === 'home' ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">マイページ</a>
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="/reservation_system_study/customer/mypage.php">🏠 ホーム</a></li>
-        <li><a class="dropdown-item" href="/reservation_system_study/customer/account.php">⚙ プロフィール設定</a></li>
-        <li><a class="dropdown-item" href="/reservation_system_study/customer/subscribe.php">💳 月額プラン</a></li>
-      </ul>
-    </div>
+    <a class="<?= ($activeMenu ?? '') === 'home' ? 'active' : '' ?>" href="/reservation_system_study/customer/mypage.php">ホーム</a>
     <a class="<?= ($activeMenu ?? '') === 'booking' ? 'active' : '' ?>" href="/reservation_system_study/customer/booking.php">予約する</a>
+    <a class="<?= ($activeMenu ?? '') === 'account' ? 'active' : '' ?>" href="/reservation_system_study/customer/account.php">プロフィール設定</a>
+    <a class="<?= ($activeMenu ?? '') === 'subscribe' ? 'active' : '' ?>" href="/reservation_system_study/customer/subscribe.php">月額プラン</a>
   </nav>
   <div class="customer-user">
     <?= htmlspecialchars($_SESSION['customer_name'] ?? '') ?> 様

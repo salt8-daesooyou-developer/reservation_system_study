@@ -353,33 +353,14 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 }
 .customer-topbar .brand { color: var(--accent); font-weight: 800; font-size: 20px; flex-shrink: 0; }
 .customer-nav { display: flex; align-items: center; gap: 8px; flex: 1; }
-.customer-nav > a, .customer-nav .dropdown-toggle {
+.customer-nav a {
   color: var(--text-dim);
   font-weight: 600;
   padding: 8px 14px;
   border-radius: 8px;
-  display: inline-block;
 }
-.customer-nav > a:hover, .customer-nav .dropdown-toggle:hover { background: var(--panel-2); color: var(--text); }
-.customer-nav > a.active, .customer-nav .dropdown-toggle.active { background: var(--accent); color: #fff; }
-.customer-nav .dropdown-menu {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(20,60,90,.15);
-  padding: 6px;
-  min-width: 200px;
-}
-.customer-nav .dropdown-item {
-  color: var(--text);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-weight: 500;
-}
-.customer-nav .dropdown-item:hover, .customer-nav .dropdown-item:focus {
-  background: var(--panel-2);
-  color: var(--text);
-}
+.customer-nav a:hover { background: var(--panel-2); color: var(--text); }
+.customer-nav a.active { background: var(--accent); color: #fff; }
 .customer-user { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-dim); flex-shrink: 0; }
 .customer-user a { color: var(--text-dim); }
 .customer-user a:hover { color: var(--accent); }
