@@ -1,7 +1,6 @@
 <?php
 require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../includes/branch.php';
-require_login_api();
 
 header('Content-Type: application/json; charset=utf-8');
 $pdo = db();
@@ -13,11 +12,14 @@ function input(): array {
     return is_array($data) ? $data : [];
 }
 
+// GET(店舗一覧)は会員登録フォームでも使うため未ログインでも許可。書き込み系のみ要ログイン。
 if ($method === 'GET') {
     $rows = $pdo->query('SELECT id, name FROM branches ORDER BY name')->fetchAll();
-    echo json_encode(['branches' => $rows, 'current_id' => current_branch_id()]);
+    echo json_encode(['branches' => $rows, 'current_id' => empty($_SESSION['staff_id']) ? null : current_branch_id()]);
     exit;
 }
+
+require_login_api();
 
 if ($method === 'POST' && isset($_GET['switch'])) {
     $d = input();

@@ -6,7 +6,12 @@ require_customer_login();
 $pdo = db();
 $customerId = (int) $_SESSION['customer_id'];
 
-$stmt = $pdo->prepare('SELECT * FROM customers WHERE id = ?');
+$stmt = $pdo->prepare('
+    SELECT c.*, b.name AS branch_name
+    FROM customers c
+    LEFT JOIN branches b ON b.id = c.branch_id
+    WHERE c.id = ?
+');
 $stmt->execute([$customerId]);
 $customer = $stmt->fetch();
 if (!$customer) {
@@ -47,6 +52,9 @@ require __DIR__ . '/../includes/customer_header.php';
     <div class="text-secondary" style="font-size:13px;">
       連絡先: <?= htmlspecialchars($customer['phone'] ?? '-') ?>
       ・ 状態: <span class="badge-status badge-<?= htmlspecialchars($customer['status']) ?>"><?= $statusLabel[$customer['status']] ?? $customer['status'] ?></span>
+    </div>
+    <div class="text-secondary" style="font-size:13px; margin-top:4px;">
+      ご利用店舗: <?= htmlspecialchars($customer['branch_name'] ?? '未登録') ?>
     </div>
   </div>
 

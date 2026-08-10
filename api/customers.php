@@ -17,7 +17,11 @@ $validStatuses = ['active', 'expired', 'pending', 'hold', 'unregistered'];
 
 if ($method === 'GET' && isset($_GET['id'])) {
     $id = (int) $_GET['id'];
-    $stmt = $pdo->prepare('SELECT * FROM customers WHERE id = ?');
+    $stmt = $pdo->prepare('
+        SELECT c.*, b.name AS branch_name
+        FROM customers c LEFT JOIN branches b ON b.id = c.branch_id
+        WHERE c.id = ?
+    ');
     $stmt->execute([$id]);
     $customer = $stmt->fetch();
     if (!$customer) {
@@ -42,19 +46,19 @@ if ($method === 'GET') {
     $status = $_GET['status'] ?? '';
     $q = trim($_GET['q'] ?? '');
 
-    $sql = 'SELECT * FROM customers WHERE 1=1';
+    $sql = 'SELECT c.*, b.name AS branch_name FROM customers c LEFT JOIN branches b ON b.id = c.branch_id WHERE 1=1';
     $params = [];
 
     if ($status !== '' && in_array($status, $validStatuses, true)) {
-        $sql .= ' AND status = ?';
+        $sql .= ' AND c.status = ?';
         $params[] = $status;
     }
     if ($q !== '') {
-        $sql .= ' AND (name LIKE ? OR phone LIKE ?)';
+        $sql .= ' AND (c.name LIKE ? OR c.phone LIKE ?)';
         $params[] = "%$q%";
         $params[] = "%$q%";
     }
-    $sql .= ' ORDER BY id DESC';
+    $sql .= ' ORDER BY c.id DESC';
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
@@ -73,8 +77,8 @@ if ($method === 'POST') {
     $status = in_array($d['status'] ?? '', $validStatuses, true) ? $d['status'] : 'unregistered';
 
     $stmt = $pdo->prepare('
-        INSERT INTO customers (name, name_kana, gender, birth_date, phone, email, status, memo)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO customers (name, name_kana, gender, birth_date, phone, email, branch_id, status, memo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
     $stmt->execute([
         $name,
@@ -83,6 +87,7 @@ if ($method === 'POST') {
         $d['birth_date'] ?: null,
         $d['phone'] ?? null,
         $d['email'] ?? null,
+        $d['branch_id'] ?: null,
         $status,
         $d['memo'] ?? null,
     ]);
@@ -107,7 +112,7 @@ if ($method === 'PUT') {
     $status = in_array($d['status'] ?? '', $validStatuses, true) ? $d['status'] : 'unregistered';
 
     $stmt = $pdo->prepare('
-        UPDATE customers SET name=?, name_kana=?, gender=?, birth_date=?, phone=?, email=?, status=?, memo=?
+        UPDATE customers SET name=?, name_kana=?, gender=?, birth_date=?, phone=?, email=?, branch_id=?, status=?, memo=?
         WHERE id=?
     ');
     $stmt->execute([
@@ -117,6 +122,7 @@ if ($method === 'PUT') {
         $d['birth_date'] ?: null,
         $d['phone'] ?? null,
         $d['email'] ?? null,
+        $d['branch_id'] ?: null,
         $status,
         $d['memo'] ?? null,
         $id,

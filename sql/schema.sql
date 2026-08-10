@@ -16,6 +16,13 @@ CREATE TABLE IF NOT EXISTS staff (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- 지점 (프렌차이즈 내 개별 매장)
+CREATE TABLE IF NOT EXISTS branches (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL UNIQUE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 -- 고객
 CREATE TABLE IF NOT EXISTS customers (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,9 +35,11 @@ CREATE TABLE IF NOT EXISTS customers (
   password_hash VARCHAR(255) NULL,
   status ENUM('active','expired','pending','hold','unregistered') NOT NULL DEFAULT 'unregistered',
   memo TEXT NULL,
+  branch_id INT NULL COMMENT '登録した店舗（RIZZ/EN等）',
   stripe_customer_id VARCHAR(100) NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (branch_id) REFERENCES branches(id),
   INDEX idx_customers_status (status),
   INDEX idx_customers_name (name)
 ) ENGINE=InnoDB;
@@ -78,13 +87,6 @@ CREATE TABLE IF NOT EXISTS stripe_subscriptions (
   FOREIGN KEY (product_id) REFERENCES membership_products(id),
   FOREIGN KEY (customer_membership_id) REFERENCES customer_memberships(id),
   INDEX idx_stripe_sub_customer (customer_id)
-) ENGINE=InnoDB;
-
--- 지점 (프렌차이즈 내 개별 매장)
-CREATE TABLE IF NOT EXISTS branches (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(150) NOT NULL UNIQUE,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- 수업 종류

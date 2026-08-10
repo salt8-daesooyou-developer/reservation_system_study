@@ -68,6 +68,12 @@ if (!empty($_SESSION['staff_id'])) {
           <label class="form-label">メールアドレス（ログインIDになります） *</label>
           <input type="email" id="fEmail" class="form-control" required>
         </div>
+        <div class="mb-2">
+          <label class="form-label">ご利用店舗 *</label>
+          <select id="fBranchId" class="form-select" required>
+            <option value="">選択してください</option>
+          </select>
+        </div>
       </div>
 
       <!-- スタッフ専用項目 -->
@@ -114,6 +120,8 @@ const errorMessages = {
   password_needs_special_char: 'パスワードには特殊文字を1つ以上含めてください。',
   phone_required: '連絡先を入力してください。',
   email_required: 'メールアドレスを入力してください。',
+  branch_required: 'ご利用店舗を選択してください。',
+  branch_not_found: '選択した店舗が見つかりません。',
   invalid_email: 'メールアドレスの形式が正しくありません。',
   duplicate_phone: 'この連絡先は既に登録されています。',
   duplicate_email: 'このメールアドレスは既に登録されています。',
@@ -121,6 +129,18 @@ const errorMessages = {
   username_required: 'ログインIDを入力してください。',
   duplicate_username: 'このログインIDは既に使用されています。',
 };
+
+fetch('/reservation_system_study/api/branches.php')
+  .then(r => r.json())
+  .then(data => {
+    const sel = document.getElementById('fBranchId');
+    data.branches.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.textContent = b.name;
+      sel.appendChild(opt);
+    });
+  });
 
 document.getElementById('typeTabs').addEventListener('click', e => {
   const btn = e.target.closest('button[data-type]');
@@ -163,13 +183,16 @@ document.getElementById('signupForm').addEventListener('submit', e => {
   if (currentType === 'customer') {
     const phone = document.getElementById('fPhone').value.trim();
     const email = document.getElementById('fEmail').value.trim();
+    const branchId = document.getElementById('fBranchId').value;
     if (!phone) { showError('連絡先を入力してください。'); return; }
     if (!email) { showError('メールアドレスを入力してください。'); return; }
+    if (!branchId) { showError('ご利用店舗を選択してください。'); return; }
     payload.name_kana = document.getElementById('fNameKana').value.trim();
     payload.gender = document.getElementById('fGender').value;
     payload.birth_date = document.getElementById('fBirthDate').value;
     payload.phone = phone;
     payload.email = email;
+    payload.branch_id = branchId;
   } else {
     const username = document.getElementById('fUsername').value.trim();
     if (!username) { showError('ログインIDを入力してください。'); return; }
