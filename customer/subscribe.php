@@ -37,7 +37,7 @@ $statusLabel = [
 ];
 
 $pageTitle = '月額プラン - 予約管理システム';
-$activeMenu = 'home';
+$activeMenu = 'subscribe';
 require __DIR__ . '/../includes/customer_header.php';
 ?>
 <div style="max-width:640px; margin:0 auto;">

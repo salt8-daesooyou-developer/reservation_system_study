@@ -15,7 +15,7 @@ if (!$customer) {
 }
 
 $pageTitle = 'アカウント設定 - 予約管理システム';
-$activeMenu = 'home';
+$activeMenu = 'account';
 require __DIR__ . '/../includes/customer_header.php';
 ?>
 <div style="max-width:640px; margin:0 auto;">

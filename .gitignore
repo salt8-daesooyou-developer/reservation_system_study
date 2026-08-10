@@ -1,6 +1,7 @@
 # Secrets — never commit real API keys
 /config/stripe_keys.local.php
 /config/google_keys.local.php
+/config/smtp_keys.local.php
 
 # OS / editor
 Thumbs.db

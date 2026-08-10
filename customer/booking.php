@@ -91,6 +91,7 @@ let selectedDate = ymd(today);
 let monthSchedules = [];
 let weekSchedules = [];
 let yearSummary = {};
+let yearMineSet = {};
 let holidaySet = {};
 let currentSchedule = null;
 
@@ -220,6 +221,7 @@ function renderMonthGrid() {
     if (isSelected) classes += ' selected';
     if (holidaySet[dateStr] !== undefined) classes += ' holiday';
 
+    const hasMine = daySchedules.some(s => s.my_reservation_id);
     const items = daySchedules.slice(0, 3).map(s => {
       const label = s.my_reservation_id ? '予約済み' : (s.booked >= s.capacity ? '満席' : `${s.booked}/${s.capacity}`);
       return `<div class="sched-item">${s.start_time.slice(0,5)} ${escapeHtml(s.class_name)} ${label}</div>`;
@@ -228,7 +230,7 @@ function renderMonthGrid() {
     const holidayBadge = holidaySet[dateStr] !== undefined ? '<span class="holiday-badge">休業日</span>' : '';
 
     html += `<div class="${classes}" data-date="${dateStr}">
-      <div class="date-num">${cellDate.getDate()}</div>
+      <div class="date-num">${cellDate.getDate()}${hasMine ? '<span class="mine-dot" title="予約済み"></span>' : ''}</div>
       ${holidayBadge}
       ${items}${more}
     </div>`;
@@ -345,7 +347,11 @@ function loadYear() {
     fetch(`/reservation_system_study/api/holidays.php?branch_id=${MY_BRANCH_ID}&start=${start}&end=${end}`).then(r => r.json()),
   ]).then(([rows, holidays]) => {
     yearSummary = {};
-    rows.forEach(r => { yearSummary[r.schedule_date] = r.count; });
+    yearMineSet = {};
+    rows.forEach(r => {
+      yearSummary[r.schedule_date] = r.count;
+      if (r.my_reserved == 1) yearMineSet[r.schedule_date] = true;
+    });
     holidaySet = {};
     holidays.forEach(h => { holidaySet[h.holiday_date] = h.memo; });
     renderYearGrid();
@@ -372,8 +378,9 @@ function renderYearGrid() {
       const dateStr = ymd(d);
       const isToday = dateStr === ymd(today);
       const isHoliday = holidaySet[dateStr] !== undefined;
+      const isMine = !!yearMineSet[dateStr];
       const count = yearSummary[dateStr] || 0;
-      cells += `<div class="mini-day ${isToday ? 'today' : ''} ${isHoliday ? 'holiday' : ''}" data-date="${dateStr}">
+      cells += `<div class="mini-day ${isToday ? 'today' : ''} ${isHoliday ? 'holiday' : ''} ${isMine ? 'mine' : ''}" data-date="${dateStr}">
         <span>${dayNum}</span>${count > 0 ? '<i class="mini-dot"></i>' : ''}
       </div>`;
     }
