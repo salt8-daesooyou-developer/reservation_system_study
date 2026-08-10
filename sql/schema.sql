@@ -16,6 +16,14 @@ CREATE TABLE IF NOT EXISTS staff (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- 지점 (프렌차이즈 내 개별 매장)
+CREATE TABLE IF NOT EXISTS branches (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL UNIQUE,
+  brand ENUM('RIZZ','EN') NOT NULL DEFAULT 'RIZZ',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 -- 고객
 CREATE TABLE IF NOT EXISTS customers (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,9 +36,12 @@ CREATE TABLE IF NOT EXISTS customers (
   password_hash VARCHAR(255) NULL,
   status ENUM('active','expired','pending','hold','unregistered') NOT NULL DEFAULT 'unregistered',
   memo TEXT NULL,
+  branch_id INT NULL COMMENT '登録した店舗（RIZZ/EN等）',
   stripe_customer_id VARCHAR(100) NULL,
+  google_sub VARCHAR(64) NULL UNIQUE COMMENT 'Google Sign-In の一意ID(sub)',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (branch_id) REFERENCES branches(id),
   INDEX idx_customers_status (status),
   INDEX idx_customers_name (name)
 ) ENGINE=InnoDB;
@@ -44,6 +55,7 @@ CREATE TABLE IF NOT EXISTS membership_products (
   session_count INT NULL,
   price DECIMAL(10,0) NOT NULL DEFAULT 0,
   stripe_price_id VARCHAR(100) NULL COMMENT 'Stripe recurring Price ID (月額課金用)',
+  brand ENUM('RIZZ','EN') NULL COMMENT 'ブランド別月額プラン用（NULLは共通商品）',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -80,13 +92,6 @@ CREATE TABLE IF NOT EXISTS stripe_subscriptions (
   INDEX idx_stripe_sub_customer (customer_id)
 ) ENGINE=InnoDB;
 
--- 지점 (프렌차이즈 내 개별 매장)
-CREATE TABLE IF NOT EXISTS branches (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(150) NOT NULL UNIQUE,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
 -- 수업 종류
 CREATE TABLE IF NOT EXISTS classes (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -112,6 +117,18 @@ CREATE TABLE IF NOT EXISTS schedules (
   FOREIGN KEY (branch_id) REFERENCES branches(id),
   INDEX idx_schedules_date (schedule_date),
   INDEX idx_schedules_branch (branch_id)
+) ENGINE=InnoDB;
+
+-- 지점별 휴일
+CREATE TABLE IF NOT EXISTS branch_holidays (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  branch_id INT NOT NULL,
+  holiday_date DATE NOT NULL,
+  memo VARCHAR(200) NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE,
+  UNIQUE KEY uniq_branch_holiday (branch_id, holiday_date),
+  INDEX idx_branch_holiday_date (holiday_date)
 ) ENGINE=InnoDB;
 
 -- 예약 / 출석 처리

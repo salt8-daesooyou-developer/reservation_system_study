@@ -31,11 +31,12 @@ require __DIR__ . '/../includes/header.php';
         <th>性別</th>
         <th>生年月日</th>
         <th>連絡先</th>
+        <th>店舗</th>
         <th></th>
       </tr>
     </thead>
     <tbody id="customerRows">
-      <tr><td colspan="7" class="text-secondary text-center py-4">読み込み中...</td></tr>
+      <tr><td colspan="8" class="text-secondary text-center py-4">読み込み中...</td></tr>
     </tbody>
   </table>
 </div>
@@ -79,6 +80,12 @@ require __DIR__ . '/../includes/header.php';
         <div class="mb-2">
           <label class="form-label">メールアドレス</label>
           <input type="email" id="cEmail" class="form-control">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">ご利用店舗</label>
+          <select id="cBranchId" class="form-select">
+            <option value="">未登録</option>
+          </select>
         </div>
         <div class="mb-2">
           <label class="form-label">状態</label>
@@ -140,6 +147,18 @@ let currentDetailId = null;
 const statusLabel = { active: 'アクティブ', expired: '期限切れ', pending: '予定', hold: '休会中', unregistered: '未登録' };
 const genderLabel = { male: '男性', female: '女性', unknown: '-' };
 
+fetch('/reservation_system_study/api/branches.php')
+  .then(r => r.json())
+  .then(data => {
+    const sel = document.getElementById('cBranchId');
+    data.branches.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.textContent = b.name;
+      sel.appendChild(opt);
+    });
+  });
+
 function loadCustomers() {
   const params = new URLSearchParams();
   if (currentStatus) params.set('status', currentStatus);
@@ -150,7 +169,7 @@ function loadCustomers() {
     .then(rows => {
       const tbody = document.getElementById('customerRows');
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-secondary text-center py-4">顧客が登録されていません。</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-secondary text-center py-4">顧客が登録されていません。</td></tr>';
         return;
       }
       tbody.innerHTML = rows.map(c => `
@@ -161,6 +180,7 @@ function loadCustomers() {
           <td>${genderLabel[c.gender] || '-'}</td>
           <td>${c.birth_date || '-'}</td>
           <td>${c.phone || '-'}</td>
+          <td>${escapeHtml(c.branch_name || '-')}</td>
           <td><button class="btn btn-sm btn-outline-light" onclick="openEdit(${c.id})">編集</button></td>
         </tr>
       `).join('');
@@ -192,6 +212,7 @@ document.getElementById('btnAddCustomer').addEventListener('click', () => {
   document.getElementById('customerModalTitle').textContent = '顧客追加';
   ['cId','cName','cNameKana','cBirthDate','cPhone','cEmail','cMemo'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('cGender').value = 'unknown';
+  document.getElementById('cBranchId').value = '';
   document.getElementById('cStatus').value = 'unregistered';
   document.getElementById('btnDeleteCustomer').classList.add('d-none');
   customerModal.show();
@@ -209,6 +230,7 @@ function openEdit(id) {
       document.getElementById('cBirthDate').value = c.birth_date || '';
       document.getElementById('cPhone').value = c.phone || '';
       document.getElementById('cEmail').value = c.email || '';
+      document.getElementById('cBranchId').value = c.branch_id || '';
       document.getElementById('cStatus').value = c.status;
       document.getElementById('cMemo').value = c.memo || '';
       document.getElementById('btnDeleteCustomer').classList.remove('d-none');
@@ -225,6 +247,7 @@ document.getElementById('btnSaveCustomer').addEventListener('click', () => {
     birth_date: document.getElementById('cBirthDate').value,
     phone: document.getElementById('cPhone').value.trim(),
     email: document.getElementById('cEmail').value.trim(),
+    branch_id: document.getElementById('cBranchId').value,
     status: document.getElementById('cStatus').value,
     memo: document.getElementById('cMemo').value.trim(),
   };

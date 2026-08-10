@@ -128,6 +128,40 @@ if ($method === 'POST') {
     exit;
 }
 
+if ($method === 'PUT') {
+    $id = (int) ($_GET['id'] ?? 0);
+    if (!$id) {
+        http_response_code(422);
+        echo json_encode(['error' => 'id_required']);
+        exit;
+    }
+    $d = input();
+    $classId = (int) ($d['class_id'] ?? 0);
+    $startTime = $d['start_time'] ?? '';
+    $endTime = $d['end_time'] ?? '';
+
+    if (!$classId || !$startTime || !$endTime) {
+        http_response_code(422);
+        echo json_encode(['error' => 'required_fields_missing']);
+        exit;
+    }
+
+    $stmt = $pdo->prepare('
+        UPDATE schedules SET class_id = ?, instructor_name = ?, start_time = ?, end_time = ?, capacity = ?
+        WHERE id = ?
+    ');
+    $stmt->execute([
+        $classId,
+        $d['instructor_name'] ?? null,
+        $startTime,
+        $endTime,
+        (int) ($d['capacity'] ?? 10),
+        $id,
+    ]);
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
 if ($method === 'DELETE') {
     $id = (int) ($_GET['id'] ?? 0);
     if (!$id) {

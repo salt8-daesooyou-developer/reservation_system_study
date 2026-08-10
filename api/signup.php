@@ -62,6 +62,7 @@ if ($type === 'customer') {
     $gender = in_array($d['gender'] ?? '', ['male', 'female'], true) ? $d['gender'] : 'unknown';
     $birthDate = ($d['birth_date'] ?? '') ?: null;
     $nameKana = trim($d['name_kana'] ?? '');
+    $branchId = (int) ($d['branch_id'] ?? 0);
 
     if ($phone === '') {
         http_response_code(422);
@@ -78,6 +79,18 @@ if ($type === 'customer') {
         echo json_encode(['error' => 'invalid_email']);
         exit;
     }
+    if (!$branchId) {
+        http_response_code(422);
+        echo json_encode(['error' => 'branch_required']);
+        exit;
+    }
+    $branchStmt = $pdo->prepare('SELECT id FROM branches WHERE id = ?');
+    $branchStmt->execute([$branchId]);
+    if (!$branchStmt->fetch()) {
+        http_response_code(422);
+        echo json_encode(['error' => 'branch_not_found']);
+        exit;
+    }
 
     $dupStmt = $pdo->prepare('SELECT phone, email FROM customers WHERE phone = ? OR email = ?');
     $dupStmt->execute([$phone, $email]);
@@ -88,8 +101,8 @@ if ($type === 'customer') {
     }
 
     $stmt = $pdo->prepare('
-        INSERT INTO customers (name, name_kana, gender, birth_date, phone, email, password_hash, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, "unregistered")
+        INSERT INTO customers (name, name_kana, gender, birth_date, phone, email, branch_id, password_hash, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, "unregistered")
     ');
     try {
         $stmt->execute([
@@ -99,6 +112,7 @@ if ($type === 'customer') {
             $birthDate,
             $phone,
             $email,
+            $branchId,
             password_hash($password, PASSWORD_DEFAULT),
         ]);
     } catch (PDOException $e) {

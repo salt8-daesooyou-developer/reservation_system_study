@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/../includes/auth.php';
+require __DIR__ . '/../includes/branch.php';
 require_login();
 $pageTitle = 'スケジュール管理';
 $activeMenu = 'calendar';
@@ -50,6 +51,7 @@ require __DIR__ . '/../includes/header.php';
       <h6 class="mb-0" id="sideDate">日付を選択してください</h6>
       <button class="btn-accent btn-sm" id="btnAddSchedule">+ スケジュール追加</button>
     </div>
+    <button class="btn btn-outline-danger btn-sm w-100 mb-2" id="btnToggleHoliday">休日に設定</button>
     <div id="sideScheduleList"><div class="text-secondary">-</div></div>
   </div>
 </div>
@@ -103,7 +105,38 @@ require __DIR__ . '/../includes/header.php';
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="mb-3" id="sdMeta"></div>
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div id="sdMeta"></div>
+          <button class="btn btn-sm btn-outline-light" id="btnEditSchedule">✏️ 編集</button>
+        </div>
+        <div id="sdEditForm" class="d-none mb-3 p-3" style="border:1px solid var(--border); border-radius:10px;">
+          <div class="row g-2">
+            <div class="col-12">
+              <label class="form-label">クラス</label>
+              <select id="sdEditClassId" class="form-select"></select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">開始時間</label>
+              <input type="time" id="sdEditStart" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">終了時間</label>
+              <input type="time" id="sdEditEnd" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">インストラクター</label>
+              <input type="text" id="sdEditInstructor" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">定員</label>
+              <input type="number" id="sdEditCapacity" class="form-control" min="1">
+            </div>
+          </div>
+          <div class="text-end mt-2">
+            <button class="btn btn-secondary btn-sm" id="btnCancelEditSchedule">キャンセル</button>
+            <button class="btn-accent btn-sm" id="btnSaveEditSchedule">保存</button>
+          </div>
+        </div>
         <h6>予約状況</h6>
         <table class="data-table mb-3">
           <thead><tr><th>顧客名</th><th>状態</th><th>予約日時</th><th>操作</th></tr></thead>
@@ -128,6 +161,8 @@ require __DIR__ . '/../includes/header.php';
 const scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
 const scheduleDetailModal = new bootstrap.Modal(document.getElementById('scheduleDetailModal'));
 
+const CURRENT_BRANCH_ID = <?= (int) current_branch_id() ?>;
+
 const today = new Date();
 let viewMode = 'month'; // 'year' | 'month' | 'week'
 let viewYear = today.getFullYear();
@@ -137,10 +172,11 @@ let selectedDate = ymd(today);
 let monthSchedules = [];
 let weekSchedules = [];
 let yearSummary = {}; // date -> count
+let holidaySet = {}; // date -> memo
 let currentScheduleId = null;
 
-const WEEK_START_HOUR = 8;
-const WEEK_END_HOUR = 22;
+const WEEK_START_HOUR = 0;
+const WEEK_END_HOUR = 24;
 const HOUR_HEIGHT = 48;
 
 function ymd(d) {
@@ -220,13 +256,20 @@ function updateTitle() {
 /* ---------- 月ビュー ---------- */
 
 function loadMonth() {
-  fetch(`/reservation_system_study/api/schedules.php?year=${viewYear}&month=${viewMonth}`)
-    .then(r => r.json())
-    .then(rows => {
-      monthSchedules = rows;
-      renderMonthGrid();
-      renderSidePanel();
-    });
+  const start = `${viewYear}-${String(viewMonth).padStart(2,'0')}-01`;
+  let endY = viewYear, endM = viewMonth + 1;
+  if (endM > 12) { endM = 1; endY++; }
+  const end = `${endY}-${String(endM).padStart(2,'0')}-01`;
+  Promise.all([
+    fetch(`/reservation_system_study/api/schedules.php?year=${viewYear}&month=${viewMonth}`).then(r => r.json()),
+    fetch(`/reservation_system_study/api/holidays.php?branch_id=${CURRENT_BRANCH_ID}&start=${start}&end=${end}`).then(r => r.json()),
+  ]).then(([schedules, holidays]) => {
+    monthSchedules = schedules;
+    holidaySet = {};
+    holidays.forEach(h => { holidaySet[h.holiday_date] = h.memo; });
+    renderMonthGrid();
+    renderSidePanel();
+  });
 }
 
 function renderMonthGrid() {
@@ -258,14 +301,17 @@ function renderMonthGrid() {
     if (otherMonth) classes += ' other-month';
     if (isToday) classes += ' today';
     if (isSelected) classes += ' selected';
+    if (holidaySet[dateStr] !== undefined) classes += ' holiday';
 
     const items = daySchedules.slice(0, 3).map(s =>
       `<div class="sched-item">${s.start_time.slice(0,5)} ${escapeHtml(s.class_name)} ${s.booked}/${s.capacity}</div>`
     ).join('');
     const more = daySchedules.length > 3 ? `<div class="sched-item text-secondary">他 ${daySchedules.length - 3} 件</div>` : '';
+    const holidayBadge = holidaySet[dateStr] !== undefined ? '<span class="holiday-badge">休日</span>' : '';
 
     html += `<div class="${classes}" data-date="${dateStr}">
       <div class="date-num">${cellDate.getDate()}</div>
+      ${holidayBadge}
       ${items}${more}
     </div>`;
   }
@@ -292,13 +338,16 @@ function loadWeek() {
   const start = getWeekStart(weekAnchor);
   const startStr = ymd(start);
   const endStr = addDays(startStr, 7);
-  fetch(`/reservation_system_study/api/schedules.php?start=${startStr}&end=${endStr}`)
-    .then(r => r.json())
-    .then(rows => {
-      weekSchedules = rows;
-      renderWeekGrid(start);
-      renderSidePanel();
-    });
+  Promise.all([
+    fetch(`/reservation_system_study/api/schedules.php?start=${startStr}&end=${endStr}`).then(r => r.json()),
+    fetch(`/reservation_system_study/api/holidays.php?branch_id=${CURRENT_BRANCH_ID}&start=${startStr}&end=${endStr}`).then(r => r.json()),
+  ]).then(([schedules, holidays]) => {
+    weekSchedules = schedules;
+    holidaySet = {};
+    holidays.forEach(h => { holidaySet[h.holiday_date] = h.memo; });
+    renderWeekGrid(start);
+    renderSidePanel();
+  });
 }
 
 function renderWeekGrid(weekStart) {
@@ -315,9 +364,11 @@ function renderWeekGrid(weekStart) {
     const dateStr = ymd(d);
     const isToday = dateStr === ymd(today);
     const isSelected = dateStr === selectedDate;
-    return `<div class="week-day-head ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-date="${dateStr}">
+    const isHoliday = holidaySet[dateStr] !== undefined;
+    return `<div class="week-day-head ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${isHoliday ? 'holiday' : ''}" data-date="${dateStr}">
       <div class="wd-name">${weekdayNames[d.getDay()]}</div>
       <div class="wd-num">${d.getDate()}</div>
+      ${isHoliday ? '<span class="holiday-badge">休</span>' : ''}
     </div>`;
   }).join('');
 
@@ -360,13 +411,18 @@ function renderWeekGrid(weekStart) {
 /* ---------- 年ビュー ---------- */
 
 function loadYear() {
-  fetch(`/reservation_system_study/api/schedules.php?year=${viewYear}&summary=1`)
-    .then(r => r.json())
-    .then(rows => {
-      yearSummary = {};
-      rows.forEach(r => { yearSummary[r.schedule_date] = r.count; });
-      renderYearGrid();
-    });
+  const start = `${viewYear}-01-01`;
+  const end = `${viewYear + 1}-01-01`;
+  Promise.all([
+    fetch(`/reservation_system_study/api/schedules.php?year=${viewYear}&summary=1`).then(r => r.json()),
+    fetch(`/reservation_system_study/api/holidays.php?branch_id=${CURRENT_BRANCH_ID}&start=${start}&end=${end}`).then(r => r.json()),
+  ]).then(([rows, holidays]) => {
+    yearSummary = {};
+    rows.forEach(r => { yearSummary[r.schedule_date] = r.count; });
+    holidaySet = {};
+    holidays.forEach(h => { holidaySet[h.holiday_date] = h.memo; });
+    renderYearGrid();
+  });
 }
 
 function renderYearGrid() {
@@ -388,8 +444,9 @@ function renderYearGrid() {
       const d = new Date(viewYear, m - 1, dayNum);
       const dateStr = ymd(d);
       const isToday = dateStr === ymd(today);
+      const isHoliday = holidaySet[dateStr] !== undefined;
       const count = yearSummary[dateStr] || 0;
-      cells += `<div class="mini-day ${isToday ? 'today' : ''}" data-date="${dateStr}">
+      cells += `<div class="mini-day ${isToday ? 'today' : ''} ${isHoliday ? 'holiday' : ''}" data-date="${dateStr}">
         <span>${dayNum}</span>${count > 0 ? '<i class="mini-dot"></i>' : ''}
       </div>`;
     }
@@ -426,6 +483,13 @@ function renderYearGrid() {
 
 function renderSidePanel() {
   document.getElementById('sideDate').textContent = selectedDate;
+
+  const isHoliday = holidaySet[selectedDate] !== undefined;
+  const holidayBtn = document.getElementById('btnToggleHoliday');
+  holidayBtn.textContent = isHoliday ? '✕ 休日を解除' : '休日に設定';
+  holidayBtn.classList.toggle('btn-outline-danger', !isHoliday);
+  holidayBtn.classList.toggle('btn-outline-secondary', isHoliday);
+
   const source = viewMode === 'week' ? weekSchedules : monthSchedules;
   const daySchedules = source.filter(s => s.schedule_date === selectedDate);
   const list = document.getElementById('sideScheduleList');
@@ -441,6 +505,18 @@ function renderSidePanel() {
     </div>
   `).join('');
 }
+
+document.getElementById('btnToggleHoliday').addEventListener('click', () => {
+  const isHoliday = holidaySet[selectedDate] !== undefined;
+  const req = isHoliday
+    ? fetch(`/reservation_system_study/api/holidays.php?date=${selectedDate}`, { method: 'DELETE' })
+    : fetch('/reservation_system_study/api/holidays.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ holiday_date: selectedDate }),
+      });
+  req.then(() => refresh());
+});
 
 /* ---------- スケジュール追加 ---------- */
 
@@ -477,7 +553,52 @@ document.getElementById('btnSaveSchedule').addEventListener('click', () => {
     .then(() => { scheduleModal.hide(); refresh(); });
 });
 
+document.getElementById('btnEditSchedule').addEventListener('click', () => {
+  if (!currentScheduleData) return;
+  const s = currentScheduleData;
+  document.getElementById('sdEditClassId').innerHTML = classList.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  document.getElementById('sdEditClassId').value = s.class_id;
+  document.getElementById('sdEditStart').value = s.start_time.slice(0, 5);
+  document.getElementById('sdEditEnd').value = s.end_time.slice(0, 5);
+  document.getElementById('sdEditInstructor').value = s.instructor_name || '';
+  document.getElementById('sdEditCapacity').value = s.capacity;
+  document.getElementById('sdEditForm').classList.remove('d-none');
+});
+
+document.getElementById('sdEditClassId').addEventListener('change', e => {
+  const cls = classList.find(c => String(c.id) === e.target.value);
+  if (cls) document.getElementById('sdEditCapacity').value = cls.capacity;
+});
+
+document.getElementById('btnCancelEditSchedule').addEventListener('click', () => {
+  document.getElementById('sdEditForm').classList.add('d-none');
+});
+
+document.getElementById('btnSaveEditSchedule').addEventListener('click', () => {
+  if (!currentScheduleId) return;
+  const payload = {
+    class_id: document.getElementById('sdEditClassId').value,
+    instructor_name: document.getElementById('sdEditInstructor').value.trim(),
+    start_time: document.getElementById('sdEditStart').value,
+    end_time: document.getElementById('sdEditEnd').value,
+    capacity: document.getElementById('sdEditCapacity').value,
+  };
+  fetch(`/reservation_system_study/api/schedules.php?id=${currentScheduleId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(async r => {
+      const data = await r.json();
+      if (!r.ok) { alert('保存に失敗しました。'); return; }
+      openScheduleDetail(currentScheduleId);
+      refresh();
+    });
+});
+
 /* ---------- スケジュール詳細・予約 ---------- */
+
+let currentScheduleData = null;
 
 function openScheduleDetail(id) {
   currentScheduleId = id;
@@ -485,10 +606,12 @@ function openScheduleDetail(id) {
   document.getElementById('sdCustomerSearch').value = '';
   document.getElementById('sdCustomerResults').innerHTML = '';
   document.getElementById('btnAddReservation').disabled = true;
+  document.getElementById('sdEditForm').classList.add('d-none');
 
   fetch(`/reservation_system_study/api/schedules.php?id=${id}`)
     .then(r => r.json())
     .then(s => {
+      currentScheduleData = s;
       document.getElementById('sdTitle').textContent = `${s.class_name} (${s.schedule_date})`;
       document.getElementById('sdMeta').innerHTML =
         `${s.start_time.slice(0,5)} - ${s.end_time.slice(0,5)} ・ インストラクター: ${escapeHtml(s.instructor_name || '-')} ・ 定員: ${s.reservations.filter(r => ['reserved','show'].includes(r.status)).length}/${s.capacity}`;

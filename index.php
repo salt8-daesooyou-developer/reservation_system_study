@@ -1,6 +1,8 @@
 <?php
 require __DIR__ . '/includes/auth.php';
 require __DIR__ . '/config/database.php';
+require __DIR__ . '/config/google.php';
+require __DIR__ . '/includes/google_client.php';
 
 $isStaff = !empty($_SESSION['staff_id']);
 $isAdmin = ($_SESSION['staff_role'] ?? '') === 'admin';
@@ -107,6 +109,11 @@ if (!$isStaff && !$isCustomer && $_SERVER['REQUEST_METHOD'] === 'POST') {
           <a href="/reservation_system_study/signup.php">新規会員登録</a>
           <a href="#" id="forgotLink">ログインIDまたはパスワードを忘れた場合</a>
         </div>
+
+        <?php if (google_is_configured()): ?>
+        <div class="text-secondary text-center" style="font-size:12px; margin:16px 0 10px;">または（顧客の方）</div>
+        <div id="gSignInContainer" style="display:flex; justify-content:center;"></div>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
 
@@ -160,7 +167,32 @@ if (!$isStaff && !$isCustomer && $_SERVER['REQUEST_METHOD'] === 'POST') {
     e.preventDefault();
     alert('利用規則は準備中です。');
   });
+
+  function handleGoogleCredential(response) {
+    fetch('/reservation_system_study/api/google_signin.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential }),
+    })
+      .then(async r => {
+        const data = await r.json();
+        if (!r.ok) { alert('Googleログインに失敗しました。'); return; }
+        location.href = '/reservation_system_study/customer/mypage.php';
+      });
+  }
 </script>
+<?php if (google_is_configured()): ?>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  window.addEventListener('load', () => {
+    google.accounts.id.initialize({
+      client_id: '<?= htmlspecialchars(google_config()['client_id']) ?>',
+      callback: handleGoogleCredential,
+    });
+    google.accounts.id.renderButton(document.getElementById('gSignInContainer'), { theme: 'outline', size: 'large', text: 'continue_with' });
+  });
+</script>
+<?php endif; ?>
 <?php endif; ?>
 </body>
 </html>

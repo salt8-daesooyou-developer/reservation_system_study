@@ -25,3 +25,7 @@ UPDATE customers SET password_hash = '$2y$10$Fu8EdGSw5BWe9g/luOwM0OyUTepULOqHQDT
 -- メールログイン検証用テストアカウント (ログインID: daesoo.you@salteight.com / 平文: test1234!)
 UPDATE customers SET email = 'daesoo.you@salteight.com'
   WHERE phone = '090-1111-2001';
+
+-- 登録店舗（検証用に本町店を割り当て）
+UPDATE customers SET branch_id = (SELECT id FROM (SELECT id FROM branches ORDER BY id LIMIT 1) AS b)
+  WHERE phone IN ('090-1111-2001', '090-1111-2002');
