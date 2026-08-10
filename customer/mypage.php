@@ -48,13 +48,18 @@ require __DIR__ . '/../includes/customer_header.php';
 ?>
 <div style="max-width:640px; margin:0 auto;">
   <div class="panel mb-3">
-    <div style="font-size:18px; font-weight:700;"><?= htmlspecialchars($customer['name']) ?> 様</div>
-    <div class="text-secondary" style="font-size:13px;">
-      連絡先: <?= htmlspecialchars($customer['phone'] ?? '-') ?>
-      ・ 状態: <span class="badge-status badge-<?= htmlspecialchars($customer['status']) ?>"><?= $statusLabel[$customer['status']] ?? $customer['status'] ?></span>
-    </div>
-    <div class="text-secondary" style="font-size:13px; margin-top:4px;">
-      ご利用店舗: <?= htmlspecialchars($customer['branch_name'] ?? '未登録') ?>
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <div style="font-size:18px; font-weight:700;"><?= htmlspecialchars($customer['name']) ?> 様</div>
+        <div class="text-secondary" style="font-size:13px;">
+          連絡先: <?= htmlspecialchars($customer['phone'] ?? '-') ?>
+          ・ 状態: <span class="badge-status badge-<?= htmlspecialchars($customer['status']) ?>"><?= $statusLabel[$customer['status']] ?? $customer['status'] ?></span>
+        </div>
+        <div class="text-secondary" style="font-size:13px; margin-top:4px;">
+          ご利用店舗: <?= htmlspecialchars($customer['branch_name'] ?? '未登録') ?>
+        </div>
+      </div>
+      <a href="/reservation_system_study/customer/account.php" class="btn btn-outline-light btn-sm">⚙ 設定</a>
     </div>
   </div>
 

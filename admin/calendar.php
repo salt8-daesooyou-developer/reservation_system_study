@@ -105,7 +105,38 @@ require __DIR__ . '/../includes/header.php';
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="mb-3" id="sdMeta"></div>
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div id="sdMeta"></div>
+          <button class="btn btn-sm btn-outline-light" id="btnEditSchedule">✏️ 編集</button>
+        </div>
+        <div id="sdEditForm" class="d-none mb-3 p-3" style="border:1px solid var(--border); border-radius:10px;">
+          <div class="row g-2">
+            <div class="col-12">
+              <label class="form-label">クラス</label>
+              <select id="sdEditClassId" class="form-select"></select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">開始時間</label>
+              <input type="time" id="sdEditStart" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">終了時間</label>
+              <input type="time" id="sdEditEnd" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">インストラクター</label>
+              <input type="text" id="sdEditInstructor" class="form-control">
+            </div>
+            <div class="col-6">
+              <label class="form-label">定員</label>
+              <input type="number" id="sdEditCapacity" class="form-control" min="1">
+            </div>
+          </div>
+          <div class="text-end mt-2">
+            <button class="btn btn-secondary btn-sm" id="btnCancelEditSchedule">キャンセル</button>
+            <button class="btn-accent btn-sm" id="btnSaveEditSchedule">保存</button>
+          </div>
+        </div>
         <h6>予約状況</h6>
         <table class="data-table mb-3">
           <thead><tr><th>顧客名</th><th>状態</th><th>予約日時</th><th>操作</th></tr></thead>
@@ -522,7 +553,52 @@ document.getElementById('btnSaveSchedule').addEventListener('click', () => {
     .then(() => { scheduleModal.hide(); refresh(); });
 });
 
+document.getElementById('btnEditSchedule').addEventListener('click', () => {
+  if (!currentScheduleData) return;
+  const s = currentScheduleData;
+  document.getElementById('sdEditClassId').innerHTML = classList.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  document.getElementById('sdEditClassId').value = s.class_id;
+  document.getElementById('sdEditStart').value = s.start_time.slice(0, 5);
+  document.getElementById('sdEditEnd').value = s.end_time.slice(0, 5);
+  document.getElementById('sdEditInstructor').value = s.instructor_name || '';
+  document.getElementById('sdEditCapacity').value = s.capacity;
+  document.getElementById('sdEditForm').classList.remove('d-none');
+});
+
+document.getElementById('sdEditClassId').addEventListener('change', e => {
+  const cls = classList.find(c => String(c.id) === e.target.value);
+  if (cls) document.getElementById('sdEditCapacity').value = cls.capacity;
+});
+
+document.getElementById('btnCancelEditSchedule').addEventListener('click', () => {
+  document.getElementById('sdEditForm').classList.add('d-none');
+});
+
+document.getElementById('btnSaveEditSchedule').addEventListener('click', () => {
+  if (!currentScheduleId) return;
+  const payload = {
+    class_id: document.getElementById('sdEditClassId').value,
+    instructor_name: document.getElementById('sdEditInstructor').value.trim(),
+    start_time: document.getElementById('sdEditStart').value,
+    end_time: document.getElementById('sdEditEnd').value,
+    capacity: document.getElementById('sdEditCapacity').value,
+  };
+  fetch(`/reservation_system_study/api/schedules.php?id=${currentScheduleId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(async r => {
+      const data = await r.json();
+      if (!r.ok) { alert('保存に失敗しました。'); return; }
+      openScheduleDetail(currentScheduleId);
+      refresh();
+    });
+});
+
 /* ---------- スケジュール詳細・予約 ---------- */
+
+let currentScheduleData = null;
 
 function openScheduleDetail(id) {
   currentScheduleId = id;
@@ -530,10 +606,12 @@ function openScheduleDetail(id) {
   document.getElementById('sdCustomerSearch').value = '';
   document.getElementById('sdCustomerResults').innerHTML = '';
   document.getElementById('btnAddReservation').disabled = true;
+  document.getElementById('sdEditForm').classList.add('d-none');
 
   fetch(`/reservation_system_study/api/schedules.php?id=${id}`)
     .then(r => r.json())
     .then(s => {
+      currentScheduleData = s;
       document.getElementById('sdTitle').textContent = `${s.class_name} (${s.schedule_date})`;
       document.getElementById('sdMeta').innerHTML =
         `${s.start_time.slice(0,5)} - ${s.end_time.slice(0,5)} ・ インストラクター: ${escapeHtml(s.instructor_name || '-')} ・ 定員: ${s.reservations.filter(r => ['reserved','show'].includes(r.status)).length}/${s.capacity}`;
