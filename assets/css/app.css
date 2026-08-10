@@ -363,6 +363,17 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 }
 .customer-nav a:hover { background: var(--panel-2); color: var(--text); }
 .customer-nav a.active { background: var(--accent); color: #fff; }
+.customer-nav-user { display: none; }
+.nav-toggle-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 18px;
+  padding: 4px 10px;
+  color: var(--text);
+  cursor: pointer;
+}
 .customer-user { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-dim); flex-shrink: 0; }
 .customer-user a { color: var(--text-dim); }
 .customer-user a:hover { color: var(--accent); }
@@ -517,3 +528,94 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 .auth-btn.outline:hover { border-color: var(--accent); color: var(--accent); }
 .auth-btn.danger { background: #fff; border-color: var(--red); color: var(--red); }
 .auth-btn.danger:hover { background: var(--red); color: #fff; }
+
+/* ============================================================
+   レスポンシブ（モバイル優先） — デスクトップより先にモバイルを検証すること
+   ============================================================ */
+@media (max-width: 860px) {
+  /* --- 顧客用ヘッダー：ハンバーガーメニュー化 --- */
+  .customer-topbar { padding: 0 14px; position: relative; }
+  .customer-topbar .brand { font-size: 18px; }
+  .nav-toggle-btn { display: inline-block; }
+  .customer-user { display: none; }
+  .customer-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 8px;
+    box-shadow: 0 12px 24px rgba(20,60,90,.15);
+    z-index: 60;
+  }
+  .customer-nav.open { display: flex; }
+  .customer-nav a { padding: 12px 14px; }
+  .customer-nav-user {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px 6px;
+    margin-top: 4px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .customer-content { padding: 16px 12px; }
+
+  /* --- 管理者サイドバー：上部の横並びバーに --- */
+  .app-shell { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 8px;
+  }
+  .sidebar .brand { width: 100%; padding: 4px 8px 6px; }
+  .sidebar a.nav-link { padding: 8px 10px; margin-bottom: 0; font-size: 13px; }
+  .topbar { flex-wrap: wrap; height: auto; min-height: 56px; padding: 10px 14px; gap: 8px; }
+  .content { padding: 14px; }
+  .branch-switcher-btn { min-width: 0; }
+
+  /* --- 汎用：フォーム・カード --- */
+  .panel { padding: 14px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* --- カレンダー：サイドパネルを下に積む --- */
+  .cal-toolbar { flex-wrap: wrap; gap: 10px; }
+  .cal-toolbar h2 { font-size: 15px; }
+  .d-flex.gap-3.align-items-start { flex-direction: column; }
+  .side-panel { width: 100%; }
+
+  /* 月ビュー */
+  .cal-cell { min-height: 64px; padding: 4px; }
+  .cal-cell .date-num { font-size: 11px; }
+  .cal-cell .sched-item { font-size: 9px; padding: 1px 3px; }
+  .cal-weekday { font-size: 10px; padding: 4px; }
+
+  /* 週ビュー：横スクロールにする */
+  .week-wrap { overflow-x: auto; }
+  .week-header, .week-body { min-width: 620px; }
+
+  /* 年ビュー：列数を減らす */
+  .year-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* --- ログイン／ランディングカード --- */
+  .auth-card { height: auto; max-width: 100%; padding: 32px 22px; }
+  .auth-title { font-size: 28px; margin-bottom: 20px; }
+  .auth-brand { padding: 16px 16px 0; }
+}
+
+@media (max-width: 420px) {
+  .year-grid { grid-template-columns: 1fr; }
+  .auth-card { padding: 24px 16px; }
+  .stat-grid { grid-template-columns: 1fr; }
+}

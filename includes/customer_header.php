@@ -21,12 +21,17 @@ require_once __DIR__ . '/auth.php';
 <body>
 <div class="customer-topbar">
   <div class="brand">RSVP</div>
-  <nav class="customer-nav">
+  <button type="button" class="nav-toggle-btn" id="navToggleBtn" aria-label="メニュー">☰</button>
+  <nav class="customer-nav" id="customerNav">
     <a class="<?= ($activeMenu ?? '') === 'home' ? 'active' : '' ?>" href="/reservation_system_study/customer/mypage.php">ホーム</a>
     <a class="<?= ($activeMenu ?? '') === 'booking' ? 'active' : '' ?>" href="/reservation_system_study/customer/booking.php">予約する</a>
     <a class="<?= ($activeMenu ?? '') === 'account' ? 'active' : '' ?>" href="/reservation_system_study/customer/account.php">プロフィール設定</a>
     <a class="<?= ($activeMenu ?? '') === 'subscribe' ? 'active' : '' ?>" href="/reservation_system_study/customer/subscribe.php">月額プラン</a>
     <a class="<?= ($activeMenu ?? '') === 'contact' ? 'active' : '' ?>" href="/reservation_system_study/customer/contact.php">お問い合わせ</a>
+    <div class="customer-nav-user">
+      <?= htmlspecialchars($_SESSION['customer_name'] ?? '') ?> 様
+      <a href="/reservation_system_study/customer/logout.php">ログアウト</a>
+    </div>
   </nav>
   <div class="customer-user">
     <?= htmlspecialchars($_SESSION['customer_name'] ?? '') ?> 様
@@ -34,3 +39,12 @@ require_once __DIR__ . '/auth.php';
   </div>
 </div>
 <div class="customer-content">
+<script>
+(function () {
+  const btn = document.getElementById('navToggleBtn');
+  const nav = document.getElementById('customerNav');
+  if (!btn || !nav) return;
+  btn.addEventListener('click', () => nav.classList.toggle('open'));
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nav.classList.remove('open')));
+})();
+</script>
