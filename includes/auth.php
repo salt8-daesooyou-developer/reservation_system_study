@@ -3,7 +3,7 @@ session_start();
 
 function require_login(): void {
     if (empty($_SESSION['staff_id'])) {
-        header('Location: /reservation_system_study/login.php?type=admin');
+        header('Location: /reservation_system_study/index.php?type=admin');
         exit;
     }
 }
@@ -42,7 +42,7 @@ function require_admin_api(): void {
 
 function require_customer_login(): void {
     if (empty($_SESSION['customer_id'])) {
-        header('Location: /reservation_system_study/login.php?type=customer');
+        header('Location: /reservation_system_study/index.php?type=customer');
         exit;
     }
 }

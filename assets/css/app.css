@@ -365,7 +365,7 @@ table.data-table tbody tr:hover { background: var(--panel-2); }
 .week-event.we-full { background: var(--panel-2); color: var(--text-dim); cursor: not-allowed; }
 .week-event.we-past { opacity: .4; cursor: not-allowed; }
 
-/* Auth card (login / landing) — shared look for login.php and index.php */
+/* Auth card — login form (guest) and menu (logged-in) both shown from index.php */
 .auth-page {
   min-height: 100vh;
   display: flex;
