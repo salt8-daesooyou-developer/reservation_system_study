@@ -75,10 +75,12 @@
     addBtn.addEventListener('click', () => {
       const name = prompt('追加する店舗名を入力してください（例: RIZZ PILATES 梅田）');
       if (!name || !name.trim()) return;
+      let brand = (prompt('ブランドを入力してください（RIZZ または EN）', 'RIZZ') || '').trim().toUpperCase();
+      if (brand !== 'EN') brand = 'RIZZ';
       fetch('/reservation_system_study/api/branches.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ name: name.trim(), brand }),
       })
         .then(async r => {
           const data = await r.json();

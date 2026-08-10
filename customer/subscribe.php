@@ -7,11 +7,19 @@ require_customer_login();
 $pdo = db();
 $customerId = (int) $_SESSION['customer_id'];
 
-$products = $pdo->query("
+$brandStmt = $pdo->prepare('
+    SELECT b.brand FROM customers c LEFT JOIN branches b ON b.id = c.branch_id WHERE c.id = ?
+');
+$brandStmt->execute([$customerId]);
+$customerBrand = $brandStmt->fetchColumn() ?: 'RIZZ';
+
+$pStmt = $pdo->prepare("
     SELECT * FROM membership_products
-    WHERE type = 'period' AND stripe_price_id IS NOT NULL
+    WHERE type = 'period' AND brand = ?
     ORDER BY price
-")->fetchAll();
+");
+$pStmt->execute([$customerBrand]);
+$products = $pStmt->fetchAll();
 
 $subStmt = $pdo->prepare("
     SELECT s.*, mp.name AS product_name
@@ -44,24 +52,23 @@ require __DIR__ . '/../includes/customer_header.php';
     </div>
   <?php endif; ?>
 
-  <?php if (!stripe_is_configured()): ?>
-    <div class="panel mb-3 text-secondary">
-      現在、月額決済（Stripe）は準備中です。管理者側の設定が完了するまでお待ちください。
-    </div>
-  <?php endif; ?>
-
   <div class="panel mb-3">
-    <h6 class="mb-3">月額プラン</h6>
+    <h6 class="mb-1">月額プラン（<?= htmlspecialchars($customerBrand) ?>）</h6>
+    <div class="text-secondary mb-3" style="font-size:12px;">ご登録店舗のブランドに応じたプランが表示されます。</div>
     <?php if (!$products): ?>
       <div class="text-secondary">現在お申込み可能な月額プランはありません。</div>
     <?php else: ?>
       <?php foreach ($products as $p): ?>
+        <?php $ready = stripe_is_configured() && !empty($p['stripe_price_id']); ?>
         <div class="d-flex justify-content-between align-items-center mb-2" style="padding:12px; border:1px solid var(--border); border-radius:10px;">
           <div>
             <div style="font-weight:700;"><?= htmlspecialchars($p['name']) ?></div>
             <div class="text-secondary" style="font-size:13px;">¥<?= number_format($p['price']) ?> / 月</div>
+            <?php if (!$ready): ?>
+              <div class="text-secondary" style="font-size:12px;">※ 決済準備中です</div>
+            <?php endif; ?>
           </div>
-          <button class="btn-accent btn-sm" onclick="startCheckout(<?= (int) $p['id'] ?>)" <?= stripe_is_configured() ? '' : 'disabled' ?>>申し込む</button>
+          <button class="btn-accent btn-sm" onclick="startCheckout(<?= (int) $p['id'] ?>)" <?= $ready ? '' : 'disabled style="opacity:.5;"' ?>>申し込む</button>
         </div>
       <?php endforeach; ?>
     <?php endif; ?>

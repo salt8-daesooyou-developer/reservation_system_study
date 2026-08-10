@@ -1,12 +1,13 @@
 USE reservation_system_study;
 
 -- 지점
-INSERT INTO branches (name) VALUES
-  ('RIZZ PILATES 本町'),
-  ('RIZZ PILATES 南森町'),
-  ('RIZZ PILATES 谷町四丁目'),
-  ('RIZZ PILATES 鶴橋')
-ON DUPLICATE KEY UPDATE name = VALUES(name);
+INSERT INTO branches (name, brand) VALUES
+  ('RIZZ PILATES 本町', 'RIZZ'),
+  ('RIZZ PILATES 南森町', 'RIZZ'),
+  ('RIZZ PILATES 谷町四丁目', 'RIZZ'),
+  ('RIZZ PILATES 鶴橋', 'RIZZ'),
+  ('EN PILATES', 'EN')
+ON DUPLICATE KEY UPDATE brand = VALUES(brand);
 
 -- 관리자 계정 (id: admin / pw: admin123)
 INSERT INTO staff (username, password_hash, name, role) VALUES
@@ -19,6 +20,12 @@ INSERT INTO membership_products (name, type, valid_days, session_count, price) V
   ('10回 回数券', 'count', NULL, 10, 80000),
   ('20回 回数券', 'count', NULL, 20, 150000)
 ON DUPLICATE KEY UPDATE price = VALUES(price);
+
+-- ブランド別 月額プラン（Stripe定期決済用）
+INSERT INTO membership_products (name, type, valid_days, price, brand) VALUES
+  ('RIZZ 月額会員', 'period', 30, 11000, 'RIZZ'),
+  ('EN 月額会員', 'period', 30, 22000, 'EN')
+ON DUPLICATE KEY UPDATE price = VALUES(price), brand = VALUES(brand);
 
 -- 수업 종류
 INSERT INTO classes (name, category, capacity) VALUES

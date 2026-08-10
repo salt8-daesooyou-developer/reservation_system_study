@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS staff (
 CREATE TABLE IF NOT EXISTS branches (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(150) NOT NULL UNIQUE,
+  brand ENUM('RIZZ','EN') NOT NULL DEFAULT 'RIZZ',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -53,6 +54,7 @@ CREATE TABLE IF NOT EXISTS membership_products (
   session_count INT NULL,
   price DECIMAL(10,0) NOT NULL DEFAULT 0,
   stripe_price_id VARCHAR(100) NULL COMMENT 'Stripe recurring Price ID (月額課金用)',
+  brand ENUM('RIZZ','EN') NULL COMMENT 'ブランド別月額プラン用（NULLは共通商品）',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
