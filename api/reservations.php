@@ -1,11 +1,13 @@
 <?php
 require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../config/database.php';
+require __DIR__ . '/../includes/activity_log.php';
 require_login_api();
 
 header('Content-Type: application/json; charset=utf-8');
 $pdo = db();
 $method = $_SERVER['REQUEST_METHOD'];
+$staffId = (int) $_SESSION['staff_id'];
 
 function input(): array {
     $raw = file_get_contents('php://input');
@@ -62,6 +64,12 @@ if ($method === 'POST') {
 
     $stmt = $pdo->prepare('INSERT INTO reservations (schedule_id, customer_id, status) VALUES (?, ?, "reserved")');
     $stmt->execute([$scheduleId, $customerId]);
+
+    $clsStmt = $pdo->prepare('SELECT c.name FROM schedules s JOIN classes c ON c.id = s.class_id WHERE s.id = ?');
+    $clsStmt->execute([$scheduleId]);
+    $className = $clsStmt->fetchColumn();
+    log_activity($pdo, $customerId, 'カレンダー', 'reservation_add', "「{$className}」を予約登録しました", $staffId);
+
     echo json_encode(['id' => (int) $pdo->lastInsertId()]);
     exit;
 }
@@ -76,6 +84,19 @@ if ($method === 'PUT') {
         exit;
     }
     $pdo->prepare('UPDATE reservations SET status = ? WHERE id = ?')->execute([$status, $id]);
+
+    $infoStmt = $pdo->prepare('
+        SELECT r.customer_id, c.name AS class_name
+        FROM reservations r JOIN schedules s ON s.id = r.schedule_id JOIN classes c ON c.id = s.class_id
+        WHERE r.id = ?
+    ');
+    $infoStmt->execute([$id]);
+    $info = $infoStmt->fetch();
+    if ($info) {
+        $statusLabel = ['reserved' => '予約中', 'show' => '出席', 'noshow' => '欠席', 'cancelled' => 'キャンセル'][$status] ?? $status;
+        log_activity($pdo, (int) $info['customer_id'], 'カレンダー', 'reservation_status', "「{$info['class_name']}」を{$statusLabel}に変更しました", $staffId);
+    }
+
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -87,7 +108,21 @@ if ($method === 'DELETE') {
         echo json_encode(['error' => 'id_required']);
         exit;
     }
+
+    $infoStmt = $pdo->prepare('
+        SELECT r.customer_id, c.name AS class_name
+        FROM reservations r JOIN schedules s ON s.id = r.schedule_id JOIN classes c ON c.id = s.class_id
+        WHERE r.id = ?
+    ');
+    $infoStmt->execute([$id]);
+    $info = $infoStmt->fetch();
+
     $pdo->prepare('DELETE FROM reservations WHERE id = ?')->execute([$id]);
+
+    if ($info) {
+        log_activity($pdo, (int) $info['customer_id'], 'カレンダー', 'reservation_delete', "「{$info['class_name']}」の予約を削除しました", $staffId);
+    }
+
     echo json_encode(['ok' => true]);
     exit;
 }

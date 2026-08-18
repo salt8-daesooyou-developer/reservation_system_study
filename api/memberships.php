@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../config/database.php';
+require __DIR__ . '/../includes/activity_log.php';
 require_login_api();
 
 header('Content-Type: application/json; charset=utf-8');
@@ -45,6 +46,8 @@ if ($method === 'POST') {
     }
     $remaining = $product['type'] === 'count' ? (int) $product['session_count'] : null;
 
+    $staffId = (int) ($_SESSION['staff_id'] ?? 0) ?: null;
+
     $pdo->beginTransaction();
     $stmt = $pdo->prepare('
         INSERT INTO customer_memberships (customer_id, product_id, start_date, end_date, remaining_count, status)
@@ -54,6 +57,16 @@ if ($method === 'POST') {
     $newId = (int) $pdo->lastInsertId();
 
     $pdo->prepare("UPDATE customers SET status = 'active' WHERE id = ?")->execute([$customerId]);
+
+    if ((float) $product['price'] > 0) {
+        $pdo->prepare('
+            INSERT INTO payments (customer_id, customer_membership_id, product_id, type, amount, method, created_by)
+            VALUES (?, ?, ?, "sale", ?, "manual", ?)
+        ')->execute([$customerId, $newId, $productId, $product['price'], $staffId]);
+    }
+
+    log_activity($pdo, $customerId, 'CRM', 'membership_add', $product['name'] . ' を登録しました', $staffId);
+
     $pdo->commit();
 
     echo json_encode(['id' => $newId]);

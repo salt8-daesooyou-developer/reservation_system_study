@@ -111,38 +111,11 @@ require __DIR__ . '/../includes/header.php';
   </div>
 </div>
 
-<!-- 顧客詳細（会員権）モーダル -->
-<div class="modal fade" id="detailModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="detailName">顧客詳細</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <h6 class="mb-2">保有中の会員権</h6>
-        <table class="data-table mb-3">
-          <thead><tr><th>プラン名</th><th>期間／回数</th><th>状態</th></tr></thead>
-          <tbody id="membershipRows"><tr><td colspan="3" class="text-secondary">-</td></tr></tbody>
-        </table>
-        <h6 class="mb-2">会員権を追加</h6>
-        <div class="d-flex gap-2">
-          <select id="productSelect" class="form-select"></select>
-          <input type="date" id="membershipStart" class="form-control" style="max-width:160px;">
-          <button class="btn-accent" id="btnAddMembership">追加</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
 const customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
-const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
 
 let currentStatus = '';
 let currentQuery = '';
-let currentDetailId = null;
 
 const statusLabel = { active: 'アクティブ', expired: '期限切れ', pending: '予定', hold: '休会中', unregistered: '未登録' };
 const genderLabel = { male: '男性', female: '女性', unknown: '-' };
@@ -176,7 +149,7 @@ function loadCustomers() {
         <tr>
           <td>${c.id}</td>
           <td><span class="badge-status badge-${c.status}">${statusLabel[c.status] || c.status}</span></td>
-          <td><a href="#" onclick="openDetail(${c.id}); return false;">${escapeHtml(c.name)}</a></td>
+          <td><a href="/reservation_system_study/admin/customer_detail.php?id=${c.id}">${escapeHtml(c.name)}</a></td>
           <td>${genderLabel[c.gender] || '-'}</td>
           <td>${c.birth_date || '-'}</td>
           <td>${c.phone || '-'}</td>
@@ -272,53 +245,6 @@ document.getElementById('btnDeleteCustomer').addEventListener('click', () => {
   fetch('/reservation_system_study/api/customers.php?id=' + id, { method: 'DELETE' })
     .then(r => r.json())
     .then(() => { customerModal.hide(); loadCustomers(); });
-});
-
-function openDetail(id) {
-  currentDetailId = id;
-  fetch('/reservation_system_study/api/customers.php?id=' + id)
-    .then(r => r.json())
-    .then(c => {
-      document.getElementById('detailName').textContent = c.name + ' の詳細';
-      const tbody = document.getElementById('membershipRows');
-      if (!c.memberships.length) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-secondary">保有中の会員権はありません。</td></tr>';
-      } else {
-        tbody.innerHTML = c.memberships.map(m => `
-          <tr>
-            <td>${escapeHtml(m.product_name)}</td>
-            <td>${m.product_type === 'count' ? (m.remaining_count + '回 残り') : (m.start_date + ' ～ ' + (m.end_date || '-'))}</td>
-            <td><span class="badge-status badge-${m.status}">${statusLabel[m.status] || m.status}</span></td>
-          </tr>
-        `).join('');
-      }
-      detailModal.show();
-    });
-}
-
-fetch('/reservation_system_study/api/memberships.php?products=1')
-  .then(r => r.json())
-  .then(products => {
-    document.getElementById('productSelect').innerHTML = products.map(p =>
-      `<option value="${p.id}">${escapeHtml(p.name)}</option>`
-    ).join('');
-  });
-
-document.getElementById('membershipStart').value = new Date().toISOString().slice(0, 10);
-
-document.getElementById('btnAddMembership').addEventListener('click', () => {
-  if (!currentDetailId) return;
-  fetch('/reservation_system_study/api/memberships.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      customer_id: currentDetailId,
-      product_id: document.getElementById('productSelect').value,
-      start_date: document.getElementById('membershipStart').value,
-    }),
-  })
-    .then(r => r.json())
-    .then(() => { openDetail(currentDetailId); loadCustomers(); });
 });
 
 loadCustomers();

@@ -5,13 +5,21 @@ require __DIR__ . '/config/google.php';
 require __DIR__ . '/includes/google_client.php';
 
 $isStaff = !empty($_SESSION['staff_id']);
-$isAdmin = ($_SESSION['staff_role'] ?? '') === 'admin';
 $isCustomer = !empty($_SESSION['customer_id']);
 
-$error = '';
-$initialType = ($_GET['type'] ?? '') === 'customer' ? 'customer' : 'admin';
+if ($isStaff) {
+    header('Location: /reservation_system_study/admin/index.php');
+    exit;
+}
+if ($isCustomer) {
+    header('Location: /reservation_system_study/customer/mypage.php');
+    exit;
+}
 
-if (!$isStaff && !$isCustomer && $_SERVER['REQUEST_METHOD'] === 'POST') {
+$error = '';
+$initialType = ($_GET['type'] ?? '') === 'admin' ? 'admin' : 'customer';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $type = ($_POST['type'] ?? '') === 'customer' ? 'customer' : 'admin';
     $initialType = $type;
     $loginId = trim($_POST['login_id'] ?? '');
@@ -47,7 +55,7 @@ if (!$isStaff && !$isCustomer && $_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= ($isStaff || $isCustomer) ? '予約管理システム' : 'MYPAGE LOGIN - 予約管理システム' ?></title>
+<title>MYPAGE LOGIN - 予約管理システム</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -57,30 +65,6 @@ if (!$isStaff && !$isCustomer && $_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="auth-brand">RSVP</div>
   <div class="auth-main">
     <div class="auth-card">
-      <?php if ($isStaff): ?>
-        <div class="auth-title">RSVP</div>
-        <div class="auth-subtitle">予約管理システム</div>
-        <div class="auth-section">
-          <div class="auth-section-title">管理者メニュー</div>
-          <a class="auth-btn outline" href="/reservation_system_study/admin/index.php">📊 ダッシュボード</a>
-          <a class="auth-btn outline" href="/reservation_system_study/admin/customers.php">👤 顧客管理</a>
-          <a class="auth-btn outline" href="/reservation_system_study/admin/calendar.php">📅 スケジュール管理</a>
-          <?php if ($isAdmin): ?>
-          <a class="auth-btn outline" href="/reservation_system_study/admin/staff.php">🔑 スタッフ管理</a>
-          <a class="auth-btn outline" href="/reservation_system_study/admin/db_schema.php">🗄️ DBスキーマ</a>
-          <?php endif; ?>
-          <a class="auth-btn danger" href="/reservation_system_study/admin/logout.php">ログアウト</a>
-        </div>
-      <?php elseif ($isCustomer): ?>
-        <div class="auth-title">RSVP</div>
-        <div class="auth-subtitle">予約管理システム</div>
-        <div class="auth-section">
-          <div class="auth-section-title">マイメニュー</div>
-          <a class="auth-btn outline" href="/reservation_system_study/customer/mypage.php">🏠 ホーム</a>
-          <a class="auth-btn outline" href="/reservation_system_study/customer/booking.php">📅 予約する</a>
-          <a class="auth-btn danger" href="/reservation_system_study/customer/logout.php">ログアウト</a>
-        </div>
-      <?php else: ?>
         <div class="auth-title">MYPAGE LOGIN</div>
 
         <div class="auth-toggle" id="typeToggle">
@@ -114,19 +98,15 @@ if (!$isStaff && !$isCustomer && $_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="text-secondary text-center" style="font-size:12px; margin:16px 0 10px;">または（顧客の方）</div>
         <div id="gSignInContainer" style="display:flex; justify-content:center;"></div>
         <?php endif; ?>
-      <?php endif; ?>
     </div>
 
-    <?php if (!$isStaff && !$isCustomer): ?>
     <div class="auth-consent">
       ログインすることで、当社の<a href="#" id="privacyLink">プライバシーポリシー</a>および<a href="#" id="termsLink">利用規則</a>に同意したものとみなされます。
     </div>
-    <?php endif; ?>
   </div>
 
   <div class="auth-footer">&copy; Copyright(c) <?= date('Y') ?> SALT EIGHT All rights reserved.</div>
 
-<?php if (!$isStaff && !$isCustomer): ?>
 <script>
   const toggle = document.getElementById('typeToggle');
   const typeInput = document.getElementById('typeInput');
@@ -192,7 +172,6 @@ if (!$isStaff && !$isCustomer && $_SERVER['REQUEST_METHOD'] === 'POST') {
     google.accounts.id.renderButton(document.getElementById('gSignInContainer'), { theme: 'outline', size: 'large', text: 'continue_with' });
   });
 </script>
-<?php endif; ?>
 <?php endif; ?>
 </body>
 </html>

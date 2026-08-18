@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../config/database.php';
+require __DIR__ . '/../includes/activity_log.php';
 
 if (empty($_SESSION['customer_id'])) {
     http_response_code(401);
@@ -157,6 +158,12 @@ if ($method === 'POST') {
 
     $stmt = $pdo->prepare('INSERT INTO reservations (schedule_id, customer_id, status) VALUES (?, ?, "reserved")');
     $stmt->execute([$scheduleId, $customerId]);
+
+    $clsStmt = $pdo->prepare('SELECT c.name FROM schedules s JOIN classes c ON c.id = s.class_id WHERE s.id = ?');
+    $clsStmt->execute([$scheduleId]);
+    $className = $clsStmt->fetchColumn();
+    log_activity($pdo, $customerId, 'カレンダー', 'reservation_add', "「{$className}」を予約しました", null);
+
     echo json_encode(['id' => (int) $pdo->lastInsertId()]);
     exit;
 }
@@ -188,6 +195,7 @@ if ($method === 'DELETE') {
     }
 
     $pdo->prepare('DELETE FROM reservations WHERE id = ?')->execute([$id]);
+    log_activity($pdo, $customerId, 'カレンダー', 'reservation_cancel', '予約をキャンセルしました', null);
     echo json_encode(['ok' => true]);
     exit;
 }
